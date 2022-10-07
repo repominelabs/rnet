@@ -8,8 +8,11 @@
 
   <ItemGroup>
     <Folder Include="Entities\" />
-    <Folder Include="Common\" />
     <Folder Include="Enums\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="11.0.0" />
   </ItemGroup>
 
 </Project>
