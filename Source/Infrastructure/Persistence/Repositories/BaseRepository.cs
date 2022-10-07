@@ -4,6 +4,7 @@ using Npgsql;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
+using static Dapper.SqlMapper;
 
 namespace Infrastructure.Persistence.Repositories
 {
@@ -24,32 +25,36 @@ namespace Infrastructure.Persistence.Repositories
         private IEnumerable<string> Columns => typeof(T).GetProperties().Where(e => /* e.Name != PrimaryKey.Name &&*/ e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => e.GetCustomAttribute<ColumnAttribute>().Name);
 
         /// <summary>
-        /// Base Create dapper ops
+        /// 
         /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public dynamic Create(T entity)
         {
             var stringOfColumns = string.Join(", ", Columns);
             var stringOfParameters = string.Join(", ", Columns.Select(e => "@" + e));
-            var query = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters})";
+            var sql = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters}) returning {PrimaryKey?.Name}";
 
             using var connection = new NpgsqlConnection(_connectionString);
             connection.Open();
-            var result = connection.Execute(query, entity);
+            var result = connection.Execute(sql, entity);
             return result;
         }
 
         /// <summary>
-        /// Base CreateAsync dapper ops
+        /// 
         /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public async Task<dynamic> CreateAsync(T entity)
         {
             var stringOfColumns = string.Join(", ", Columns);
             var stringOfParameters = string.Join(", ", Columns.Select(e => "@" + e));
-            var query = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters})";
+            var sql = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters}) returning {PrimaryKey?.Name}";
 
             await using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
-            var result = await connection.ExecuteAsync(query, entity);
+            var result = await connection.ExecuteAsync(sql, entity);
             return result;
         }
 
@@ -63,24 +68,64 @@ namespace Infrastructure.Persistence.Repositories
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public int Delete(T entity)
         {
-            throw new NotImplementedException();
+            var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
+
+            using var connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            var result = connection.Execute(sql, entity);
+            return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
         public int Delete(string whereClause)
         {
-            throw new NotImplementedException();
+            var sql = $"delete from {TableName} where {whereClause}";
+
+            using var connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            var result = connection.Execute(sql);
+            return result;
         }
 
-        public Task<int> DeleteAsync(T entity)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public async Task<int> DeleteAsync(T entity)
         {
-            throw new NotImplementedException();
+            var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            _ = connection.OpenAsync();
+            var result = await connection.ExecuteAsync(sql, entity);
+            return result;
         }
 
-        public Task<int> DeleteAsync(string whereClause)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
+        public async Task<int> DeleteAsync(string whereClause)
         {
-            throw new NotImplementedException();
+            var sql = $"delete from {TableName} where {whereClause}";
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            _ = connection.OpenAsync();
+            var result = await connection.ExecuteAsync(sql);
+            return result;
         }
 
         public List<T> Get(dynamic id)
