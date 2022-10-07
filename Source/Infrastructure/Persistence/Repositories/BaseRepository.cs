@@ -21,6 +21,7 @@ namespace Infrastructure.Persistence.Repositories
         }
 
         private string TableName => typeof(T).GetCustomAttribute<TableAttribute>().Name;
+        private IEnumerable<PropertyInfo>? Properties => typeof(T).GetProperties();
         private PropertyInfo? PrimaryKey => typeof(T).GetProperties().Where(x => x.GetCustomAttributes().Any(y => y.GetType() == typeof(KeyAttribute))).FirstOrDefault();
         private IEnumerable<string> Columns => typeof(T).GetProperties().Where(e => /* e.Name != PrimaryKey.Name &&*/ e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => e.GetCustomAttribute<ColumnAttribute>().Name);
 
@@ -216,24 +217,110 @@ namespace Infrastructure.Persistence.Repositories
             return result.ToList();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="nullable"></param>
+        /// <returns></returns>
         public dynamic Update(T entity, bool nullable = false)
         {
-            throw new NotImplementedException();
+            // Create stringOfSets with entity's not null attribute(s) if nullable is false
+            IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name); 
+            string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = @{x}"));
+
+            // Create stringOfSets with entity's all attribute(s) if nullable is true
+            if (nullable)
+            {
+                stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
+            }
+
+            var sql = $"update {TableName} set {stringOfSets} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
+
+            using var connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            var result = connection.Execute(sql, entity);
+            return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="whereClause"></param>
+        /// <param name="nullable"></param>
+        /// <returns></returns>
         public dynamic Update(T entity, string whereClause, bool nullable = false)
         {
-            throw new NotImplementedException();
+            // Create stringOfSets with entity's not null attribute(s) if nullable is false
+            IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
+            string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = @{x}"));
+
+            // Create stringOfSets with entity's all attribute(s) if nullable is true
+            if (nullable)
+            {
+                stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
+            }
+
+            var sql = $"update {TableName} set {stringOfSets} where {whereClause}";
+
+            using var connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            var result = connection.Execute(sql, entity);
+            return result;
         }
 
-        public Task<dynamic> UpdateAsync(T entity, bool nullable = false)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="nullable"></param>
+        /// <returns></returns>
+        public async Task<dynamic> UpdateAsync(T entity, bool nullable = false)
         {
-            throw new NotImplementedException();
+            // Create stringOfSets with entity's not null attribute(s) if nullable is false
+            IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
+            string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = @{x}"));
+
+            // Create stringOfSets with entity's all attribute(s) if nullable is true
+            if (nullable)
+            {
+                stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
+            }
+
+            var sql = $"update {TableName} set {stringOfSets} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            _ = connection.OpenAsync();
+            var result = await connection.ExecuteAsync(sql, entity);
+            return result;
         }
 
-        public Task<dynamic> UpdateAsync(T entity, string whereClause, bool nullable = false)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="whereClause"></param>
+        /// <param name="nullable"></param>
+        /// <returns></returns>
+        public async Task<dynamic> UpdateAsync(T entity, string whereClause, bool nullable = false)
         {
-            throw new NotImplementedException();
+            // Create stringOfSets with entity's not null attribute(s) if nullable is false
+            IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
+            string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = @{x}"));
+
+            // Create stringOfSets with entity's all attribute(s) if nullable is true
+            if (nullable)
+            {
+                stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
+            }
+
+            var sql = $"update {TableName} set {stringOfSets} where {whereClause}";
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            _ = connection.OpenAsync();
+            var result = await connection.ExecuteAsync(sql, entity);
+            return result;
         }
     }
 }
