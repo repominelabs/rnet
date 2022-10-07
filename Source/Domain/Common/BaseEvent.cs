@@ -2,5 +2,7 @@
 
 namespace Domain.Common
 {
-    public class BaseEvent : INotification { }
+    public class BaseEvent : INotification
+    {
+    }
 }
