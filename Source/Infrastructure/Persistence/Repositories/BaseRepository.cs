@@ -73,7 +73,7 @@ namespace Infrastructure.Persistence.Repositories
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public int Delete(T entity)
+        public dynamic Delete(T entity)
         {
             var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
@@ -88,7 +88,7 @@ namespace Infrastructure.Persistence.Repositories
         /// </summary>
         /// <param name="whereClause"></param>
         /// <returns></returns>
-        public int Delete(string whereClause)
+        public dynamic Delete(string whereClause)
         {
             var sql = $"delete from {TableName} where {whereClause}";
 
@@ -103,7 +103,7 @@ namespace Infrastructure.Persistence.Repositories
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Task<int> DeleteAsync(T entity)
+        public async Task<dynamic> DeleteAsync(T entity)
         {
             var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
@@ -118,7 +118,7 @@ namespace Infrastructure.Persistence.Repositories
         /// </summary>
         /// <param name="whereClause"></param>
         /// <returns></returns>
-        public async Task<int> DeleteAsync(string whereClause)
+        public async Task<dynamic> DeleteAsync(string whereClause)
         {
             var sql = $"delete from {TableName} where {whereClause}";
 
@@ -128,32 +128,110 @@ namespace Infrastructure.Persistence.Repositories
             return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public List<T> Get(dynamic id)
         {
-            throw new NotImplementedException();
+            var sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
+
+            using var connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            List<T> result = connection.Query<T>(sql).ToList();
+            return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
         public List<T> Get(string whereClause)
         {
-            throw new NotImplementedException();
+            var sql = $"select * from {TableName} where {whereClause}";
+
+            using var connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            List<T> result = connection.Query<T>(sql).ToList();
+            return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public List<T> Get()
         {
-            throw new NotImplementedException();
+            var sql = $"select * from {TableName}";
+
+            using var connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            List<T> result = connection.Query<T>(sql).ToList();
+            return result;
         }
 
-        public Task<List<T>> GetAsync(dynamic id)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<List<T>> GetAsync(dynamic id)
+        {
+            var sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            _ = connection.OpenAsync();
+            var result = await connection.QueryAsync<T>(sql);
+            return result.ToList();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
+        public async Task<List<T>> GetAsync(string whereClause)
+        {
+            var sql = $"select * from {TableName} where {whereClause}";
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            _ = connection.OpenAsync();
+            var result = await connection.QueryAsync<T>(sql);
+            return result.ToList();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<T>> GetAsync()
+        {
+            var sql = $"select * from {TableName}";
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            _ = connection.OpenAsync();
+            var result = await connection.QueryAsync<T>(sql);
+            return result.ToList();
+        }
+
+        public dynamic Update(T entity, bool nullable = false)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<T>> GetAsync(string whereClause)
+        public dynamic Update(T entity, string whereClause, bool nullable = false)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<T>> GetAsync()
+        public Task<dynamic> UpdateAsync(T entity, bool nullable = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<dynamic> UpdateAsync(T entity, string whereClause, bool nullable = false)
         {
             throw new NotImplementedException();
         }
