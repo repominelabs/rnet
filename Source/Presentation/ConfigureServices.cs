@@ -1,6 +1,7 @@
 ﻿using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Presentation.Filters;
 
 namespace Presentation;
 
@@ -14,7 +15,10 @@ public static class ConfigureServices
         }
 
         services.AddAutoMapper(typeof(Program));
-        services.AddControllers();
+        services.AddControllers(options =>
+        {
+            options.Filters.Add<BaseExceptionFilter>();
+        });
         services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Program>());
 
         services.AddApiVersioning(opt =>
