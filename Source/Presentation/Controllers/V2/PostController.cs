@@ -1,10 +1,10 @@
 ﻿using Application.Features.Post.Commands.CreatePost;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Presentation.Controllers.V1;
+namespace Presentation.Controllers.V2;
 
 [Route("Api/V{version:apiVersion}/[controller]/[action]")]
-[ApiVersion("1.0", Deprecated = true)]
+[ApiVersion("2.0")]
 public class PostController : BaseController
 {
     [HttpPost]
