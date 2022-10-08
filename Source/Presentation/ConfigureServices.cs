@@ -13,6 +13,7 @@ public static class ConfigureServices
             throw new ArgumentNullException(nameof(configuration));
         }
 
+        services.AddAutoMapper(typeof(Program));
         services.AddControllers();
         services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Program>());
 
