@@ -76,7 +76,7 @@ public static class ConfigureServices
                         });
             options.CustomSchemaIds(type => type.ToString());
             options.CustomSchemaIds(type => type.FullName);
-            options.OperationFilter<SwaggerDefaultValues>();
+            options.OperationFilter<SwaggerDefaultValuesFilter>();
             options.SwaggerDoc("v1", new OpenApiInfo { Version = "v1", Title = "DotNetKickoff API" });
             options.SwaggerDoc("v2", new OpenApiInfo { Version = "v2", Title = "DotNetKickoff API" });
         });

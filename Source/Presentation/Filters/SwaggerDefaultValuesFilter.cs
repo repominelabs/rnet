@@ -5,7 +5,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Presentation.Filters;
 
-public class SwaggerDefaultValues : IOperationFilter
+public class SwaggerDefaultValuesFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
