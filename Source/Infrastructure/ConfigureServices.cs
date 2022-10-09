@@ -1,5 +1,7 @@
 ﻿using Application.Interfaces.Repositories;
+using Infrastructure.Persistence.Contexts;
 using Infrastructure.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +15,8 @@ namespace Infrastructure
             {
                 throw new ArgumentNullException(nameof(configuration));
             }
+
+            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(configuration["ConnectionStrings:DefaultConnection"]));
 
             _ = services
                 .AddTransient<ICommentRepository, CommentRepository>(x => new CommentRepository(""))
