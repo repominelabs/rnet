@@ -1,8 +1,7 @@
 ﻿using MediatR;
 
-namespace Domain.Common
+namespace Domain.Common;
+
+public class BaseEvent : INotification
 {
-    public class BaseEvent : INotification
-    {
-    }
 }

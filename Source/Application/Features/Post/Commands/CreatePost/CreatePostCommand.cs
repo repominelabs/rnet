@@ -1,5 +1,7 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Interfaces.Contexts;
+using Application.Interfaces.Repositories;
 using AutoMapper;
+using Domain.Events.Post;
 using MediatR;
 
 namespace Application.Features.Post.Commands.CreatePost;
@@ -13,19 +15,23 @@ public class CreatePostCommand : IRequest<int>
 
 public class CreatePostCommandHandler : IRequestHandler<CreatePostCommand, int>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
 
-    public CreatePostCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public CreatePostCommandHandler(IApplicationDbContext context, IUnitOfWork unitOfWork, IMapper mapper)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
         _mapper = mapper;
     }
 
     public async Task<int> Handle(CreatePostCommand request, CancellationToken cancellationToken)
     {
         Domain.Entities.Post post = _mapper.Map<CreatePostCommand, Domain.Entities.Post>(request);
-        int response = await _unitOfWork.Posts.CreateAsync(post);
-        return response;
+
+        post.AddDomainEvent(new PostCreatedEvent(post));
+        _context.Posts.Add(post);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return post.Id;
     }
 }
