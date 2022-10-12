@@ -21,6 +21,6 @@ public class DeletePostCommandHandler : IRequestHandler<DeletePostCommand, int>
     {
         Domain.Entities.Post post = new () { Id = request.Id };
         _context.Posts.Remove(post);
-        // return post.Id;
+        return Task.FromResult(0);
     }
 }
