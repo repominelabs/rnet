@@ -1,8 +1,7 @@
-﻿namespace Application.Interfaces.Repositories
+﻿namespace Application.Interfaces.Repositories;
+
+public interface IUnitOfWork
 {
-    public interface IUnitOfWork
-    {
-        IPostRepository Posts { get; }
-        ICommentRepository Comments { get; }
-    }
+    IPostRepository Posts { get; }
+    ICommentRepository Comments { get; }
 }
