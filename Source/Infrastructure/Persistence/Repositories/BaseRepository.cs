@@ -53,7 +53,7 @@ namespace Infrastructure.Persistence.Repositories
             var stringOfParameters = string.Join(", ", Columns.Select(e => "@" + e));
             var sql = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters}) returning {PrimaryKey?.Name}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.ExecuteAsync(sql, entity);
             return result;
@@ -108,7 +108,7 @@ namespace Infrastructure.Persistence.Repositories
         {
             var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.ExecuteAsync(sql, entity);
             return result;
@@ -123,7 +123,7 @@ namespace Infrastructure.Persistence.Repositories
         {
             var sql = $"delete from {TableName} where {whereClause}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.ExecuteAsync(sql);
             return result;
@@ -182,7 +182,7 @@ namespace Infrastructure.Persistence.Repositories
         {
             var sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.QueryAsync<T>(sql);
             return result.ToList();
@@ -197,7 +197,7 @@ namespace Infrastructure.Persistence.Repositories
         {
             var sql = $"select * from {TableName} where {whereClause}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.QueryAsync<T>(sql);
             return result.ToList();
@@ -211,7 +211,7 @@ namespace Infrastructure.Persistence.Repositories
         {
             var sql = $"select * from {TableName}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.QueryAsync<T>(sql);
             return result.ToList();
@@ -290,7 +290,7 @@ namespace Infrastructure.Persistence.Repositories
 
             var sql = $"update {TableName} set {stringOfSets} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.ExecuteAsync(sql, entity);
             return result;
@@ -317,7 +317,7 @@ namespace Infrastructure.Persistence.Repositories
 
             var sql = $"update {TableName} set {stringOfSets} where {whereClause}";
 
-            await using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             _ = connection.OpenAsync();
             var result = await connection.ExecuteAsync(sql, entity);
             return result;

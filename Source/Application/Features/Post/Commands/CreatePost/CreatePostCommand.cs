@@ -1,5 +1,4 @@
 ﻿using Application.Interfaces.Contexts;
-using Application.Interfaces.Repositories;
 using AutoMapper;
 using Domain.Events.Post;
 using MediatR;
