@@ -11,7 +11,7 @@ namespace Infrastructure.Persistence.Repositories;
 /// <summary>
 /// 
 /// </summary>
-public class BaseRepository<T> : IBaseRepository<T>
+public class BaseRepository : IBaseRepository
 {
     private readonly string _connStr;
 

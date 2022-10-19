@@ -1,6 +1,6 @@
 ﻿namespace Application.Interfaces.Repositories;
 
-public interface IBaseRepository<T>
+public interface IBaseRepository
 {
     dynamic Create(T entity);
     Task<dynamic> CreateAsync(T entity);
