@@ -13,11 +13,11 @@ namespace Infrastructure.Persistence.Repositories;
 /// </summary>
 public class BaseRepository<T> : IBaseRepository<T>
 {
-    private readonly string _connectionString;
+    private readonly string _connStr;
 
-    public BaseRepository(string connectionString)
+    public BaseRepository(string connStr)
     {
-        _connectionString = connectionString;
+        _connStr = connStr;
     }
 
     private string TableName => typeof(T).GetCustomAttribute<TableAttribute>().Name;
@@ -36,7 +36,7 @@ public class BaseRepository<T> : IBaseRepository<T>
         var stringOfParameters = string.Join(", ", Columns.Select(e => "@" + e));
         var sql = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters}) returning {PrimaryKey?.Name}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         var result = connection.Execute(sql, entity);
         return result;
@@ -53,7 +53,7 @@ public class BaseRepository<T> : IBaseRepository<T>
         var stringOfParameters = string.Join(", ", Columns.Select(e => "@" + e));
         var sql = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters}) returning {PrimaryKey?.Name}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.ExecuteAsync(sql, entity);
         return result;
@@ -78,7 +78,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         var result = connection.Execute(sql, entity);
         return result;
@@ -93,7 +93,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"delete from {TableName} where {whereClause}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         var result = connection.Execute(sql);
         return result;
@@ -108,7 +108,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.ExecuteAsync(sql, entity);
         return result;
@@ -123,7 +123,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"delete from {TableName} where {whereClause}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.ExecuteAsync(sql);
         return result;
@@ -138,7 +138,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         List<T> result = connection.Query<T>(sql).ToList();
         return result;
@@ -153,7 +153,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"select * from {TableName} where {whereClause}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         List<T> result = connection.Query<T>(sql).ToList();
         return result;
@@ -167,7 +167,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"select * from {TableName}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         List<T> result = connection.Query<T>(sql).ToList();
         return result;
@@ -182,7 +182,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.QueryAsync<T>(sql);
         return result.ToList();
@@ -197,7 +197,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"select * from {TableName} where {whereClause}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.QueryAsync<T>(sql);
         return result.ToList();
@@ -211,7 +211,7 @@ public class BaseRepository<T> : IBaseRepository<T>
     {
         var sql = $"select * from {TableName}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.QueryAsync<T>(sql);
         return result.ToList();
@@ -237,7 +237,7 @@ public class BaseRepository<T> : IBaseRepository<T>
 
         var sql = $"update {TableName} set {stringOfSets} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         var result = connection.Execute(sql, entity);
         return result;
@@ -264,7 +264,7 @@ public class BaseRepository<T> : IBaseRepository<T>
 
         var sql = $"update {TableName} set {stringOfSets} where {whereClause}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         var result = connection.Execute(sql, entity);
         return result;
@@ -290,7 +290,7 @@ public class BaseRepository<T> : IBaseRepository<T>
 
         var sql = $"update {TableName} set {stringOfSets} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.ExecuteAsync(sql, entity);
         return result;
@@ -317,7 +317,7 @@ public class BaseRepository<T> : IBaseRepository<T>
 
         var sql = $"update {TableName} set {stringOfSets} where {whereClause}";
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.ExecuteAsync(sql, entity);
         return result;
