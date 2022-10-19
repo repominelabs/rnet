@@ -14,10 +14,12 @@ namespace Infrastructure.Persistence.Repositories;
 public class BaseRepository<T> : IBaseRepository<T>
 {
     private readonly string _connStr;
+    private readonly IDatabaseManagerRepository _databaseManagerRepository;
 
-    public BaseRepository(string connStr)
+    public BaseRepository(string connStr, IDatabaseManagerRepository databaseManagerRepository)
     {
         _connStr = connStr;
+        _databaseManagerRepository = databaseManagerRepository;
     }
 
     private string TableName => typeof(T).GetCustomAttribute<TableAttribute>().Name;
@@ -32,6 +34,8 @@ public class BaseRepository<T> : IBaseRepository<T>
     /// <returns></returns>
     public dynamic Create(T entity)
     {
+        _databaseManagerRepository.Create(entity);
+
         var stringOfColumns = string.Join(", ", Columns);
         var stringOfParameters = string.Join(", ", Columns.Select(e => "@" + e));
         var sql = $"insert into {TableName} ({stringOfColumns}) values ({stringOfParameters}) returning {PrimaryKey?.Name}";
@@ -59,12 +63,12 @@ public class BaseRepository<T> : IBaseRepository<T>
         return result;
     }
 
-    public dynamic CreateOrUpdate(T entity, bool nullable = false, string whereClause = null)
+    public dynamic CreateOrUpdate(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public Task<dynamic> CreateOrUpdateAsync(T entity, bool nullable = false, string whereClause = null)
+    public Task<dynamic> CreateOrUpdateAsync(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }

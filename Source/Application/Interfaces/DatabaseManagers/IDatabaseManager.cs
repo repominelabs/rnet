@@ -1,6 +1,6 @@
-﻿namespace Application.Interfaces.Repositories;
+﻿namespace Application.Interfaces.DatabaseManagers;
 
-public interface IDatabaseManagerRepository
+public interface IDatabaseManager
 {
     dynamic Create<T>(T entity);
     Task<dynamic> CreateAsync<T>(T entity);
