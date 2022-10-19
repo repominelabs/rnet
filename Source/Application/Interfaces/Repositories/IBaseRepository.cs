@@ -11,13 +11,9 @@ public interface IBaseRepository
     Task<dynamic> DeleteAsync<T>(dynamic id);
     Task<dynamic> DeleteAsync<T>(string whereClause);
     List<T> Get<T>(dynamic id);
-    List<T> Get<T>(string whereClause);
-    List<T> Get<T>();
+    List<T> Get<T>(string whereClause = null);
     Task<List<T>> GetAsync<T>(dynamic id);
-    Task<List<T>> GetAsync<T>(string whereClause);
-    Task<List<T>> GetAsync<T>();
-    dynamic Update<T>(T entity, bool nullable = false);
-    dynamic Update<T>(T entity, string whereClause, bool nullable = false);
-    Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false);
-    Task<dynamic> UpdateAsync<T>(T entity, string whereClause, bool nullable = false);
+    Task<List<T>> GetAsync<T>(string whereClause = null);
+    dynamic Update<T>(T entity, bool nullable = false, string whereClause = null);
+    Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string whereClause = null);
 }
