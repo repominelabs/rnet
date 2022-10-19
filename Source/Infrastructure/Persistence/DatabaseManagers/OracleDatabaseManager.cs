@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.DatabaseManagers;
 using Dapper;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Npgsql;
 using Oracle.ManagedDataAccess.Client;
 using System.ComponentModel.DataAnnotations;
@@ -62,7 +63,7 @@ public class OracleDatabaseManager : IOracleDatabaseManager
         var stringOfParameters = string.Join(", ", columns.Select(e => ":" + e));
         var sql = $"insert into {_schema}.{GetTableName<T>()} ({stringOfColumns}) values ({stringOfParameters}) returning {GetPrimaryKey<T>()?.Name}";
 
-        using var connection = new NpgsqlConnection(_connStr);
+        using var connection = new OracleConnection(_connStr);
         _ = connection.OpenAsync();
         var result = await connection.ExecuteAsync(sql, entity);
         return result;
@@ -78,28 +79,50 @@ public class OracleDatabaseManager : IOracleDatabaseManager
         if(dbConnection.State != ConnectionState.Open)
             dbConnection.Open();
 
-        var result = await dbConnection.ExecuteAsync(sql, entity);
+        var result = await dbConnection.ExecuteAsync(sql, entity, dbTransaction);
         return result;
     }
 
     public dynamic Delete<T>(string whereClause)
     {
-        throw new NotImplementedException();
+        var sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
+
+        using var connection = new OracleConnection(_connStr);
+        connection.Open();
+        var result = connection.Execute(sql);
+        return result;
     }
 
     public dynamic Delete<T>(IDbConnection dbConnection, IDbTransaction dbTransaction, string whereClause)
     {
-        throw new NotImplementedException();
+        var sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
+
+        if (dbConnection.State != ConnectionState.Open)
+            dbConnection.Open();
+
+        var result = dbConnection.Execute(sql, dbTransaction);
+        return result;
     }
 
-    public Task<dynamic> DeleteAsync<T>(string whereClause)
+    public async Task<dynamic> DeleteAsync<T>(string whereClause)
     {
-        throw new NotImplementedException();
+        string sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
+
+        using var connection = new OracleConnection(_connStr);
+        _ = connection.OpenAsync();
+        var result = await connection.ExecuteAsync(sql);
+        return result;
     }
 
-    public Task<dynamic> DeleteAsync<T>(IDbConnection dbConnection, IDbTransaction dbTransaction, string whereClause)
+    public async Task<dynamic> DeleteAsync<T>(IDbConnection dbConnection, IDbTransaction dbTransaction, string whereClause)
     {
-        throw new NotImplementedException();
+        string sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
+
+        if (dbConnection.State != ConnectionState.Open)
+            dbConnection.Open();
+
+        var result = await dbConnection.ExecuteAsync(sql, null, dbTransaction);
+        return result;
     }
 
     public List<T> Get<T>(string whereClause = null)
