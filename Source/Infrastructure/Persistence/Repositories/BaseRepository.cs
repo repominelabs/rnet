@@ -11,7 +11,7 @@ namespace Infrastructure.Persistence.Repositories;
 /// <summary>
 /// 
 /// </summary>
-public class BaseRepository : IBaseRepository
+public class BaseRepository<T> : IBaseRepository<T>
 {
     private readonly string _connStr;
 
@@ -59,12 +59,12 @@ public class BaseRepository : IBaseRepository
         return result;
     }
 
-    public dynamic CreateOrUpdate(T entity)
+    public dynamic CreateOrUpdate(T entity, bool nullable = false, string whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public Task<dynamic> CreateOrUpdateAsync(T entity)
+    public Task<dynamic> CreateOrUpdateAsync(T entity, bool nullable = false, string whereClause = null)
     {
         throw new NotImplementedException();
     }
@@ -72,15 +72,15 @@ public class BaseRepository : IBaseRepository
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="entity"></param>
+    /// <param name="id"></param>
     /// <returns></returns>
-    public dynamic Delete(T entity)
+    public dynamic Delete(dynamic id)
     {
-        var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
+        string sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{id}";
 
         using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
-        var result = connection.Execute(sql, entity);
+        var result = connection.Execute(sql);
         return result;
     }
 
@@ -102,15 +102,15 @@ public class BaseRepository : IBaseRepository
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="entity"></param>
+    /// <param name="id"></param>
     /// <returns></returns>
-    public async Task<dynamic> DeleteAsync(T entity)
+    public async Task<dynamic> DeleteAsync(dynamic id)
     {
-        var sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
+        string sql = $"delete from {TableName} where {PrimaryKey?.Name} = @{id}";
 
         using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
-        var result = await connection.ExecuteAsync(sql, entity);
+        var result = await connection.ExecuteAsync(sql);
         return result;
     }
 
@@ -121,7 +121,7 @@ public class BaseRepository : IBaseRepository
     /// <returns></returns>
     public async Task<dynamic> DeleteAsync(string whereClause)
     {
-        var sql = $"delete from {TableName} where {whereClause}";
+        string sql = $"delete from {TableName} where {whereClause}";
 
         using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
@@ -136,7 +136,7 @@ public class BaseRepository : IBaseRepository
     /// <returns></returns>
     public List<T> Get(dynamic id)
     {
-        var sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
+        string sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
 
         using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
@@ -151,21 +151,7 @@ public class BaseRepository : IBaseRepository
     /// <returns></returns>
     public List<T> Get(string whereClause)
     {
-        var sql = $"select * from {TableName} where {whereClause}";
-
-        using var connection = new NpgsqlConnection(_connStr);
-        connection.Open();
-        List<T> result = connection.Query<T>(sql).ToList();
-        return result;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns></returns>
-    public List<T> Get()
-    {
-        var sql = $"select * from {TableName}";
+        string sql = $"select * from {TableName} where {whereClause}";
 
         using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
@@ -180,7 +166,7 @@ public class BaseRepository : IBaseRepository
     /// <returns></returns>
     public async Task<List<T>> GetAsync(dynamic id)
     {
-        var sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
+        string sql = $"select * from {TableName} where {PrimaryKey?.Name} = @{id}";
 
         using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
@@ -195,7 +181,7 @@ public class BaseRepository : IBaseRepository
     /// <returns></returns>
     public async Task<List<T>> GetAsync(string whereClause)
     {
-        var sql = $"select * from {TableName} where {whereClause}";
+        string sql = $"select * from {TableName} where {whereClause}";
 
         using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();
@@ -203,27 +189,24 @@ public class BaseRepository : IBaseRepository
         return result.ToList();
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<T>> GetAsync()
+    public List<T> Query()
     {
-        var sql = $"select * from {TableName}";
+        throw new NotImplementedException();
+    }
 
-        using var connection = new NpgsqlConnection(_connStr);
-        _ = connection.OpenAsync();
-        var result = await connection.QueryAsync<T>(sql);
-        return result.ToList();
+    public Task<List<T>> QueryAsync()
+    {
+        throw new NotImplementedException();
     }
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="entity"></param>
+    /// <param name="whereClause"></param>
     /// <param name="nullable"></param>
     /// <returns></returns>
-    public dynamic Update(T entity, bool nullable = false)
+    public dynamic Update(T entity, bool nullable = false, string? whereClause = null)
     {
         // Create stringOfSets with entity's not null attribute(s) if nullable is false
         IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
@@ -235,7 +218,7 @@ public class BaseRepository : IBaseRepository
             stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
         }
 
-        var sql = $"update {TableName} set {stringOfSets} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
+        string sql = $"update {TableName} set {stringOfSets} where {whereClause}";
 
         using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
@@ -250,7 +233,7 @@ public class BaseRepository : IBaseRepository
     /// <param name="whereClause"></param>
     /// <param name="nullable"></param>
     /// <returns></returns>
-    public dynamic Update(T entity, string whereClause, bool nullable = false)
+    public async Task<dynamic> UpdateAsync(T entity, bool nullable = false, string? whereClause = null)
     {
         // Create stringOfSets with entity's not null attribute(s) if nullable is false
         IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
@@ -262,60 +245,7 @@ public class BaseRepository : IBaseRepository
             stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
         }
 
-        var sql = $"update {TableName} set {stringOfSets} where {whereClause}";
-
-        using var connection = new NpgsqlConnection(_connStr);
-        connection.Open();
-        var result = connection.Execute(sql, entity);
-        return result;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="entity"></param>
-    /// <param name="nullable"></param>
-    /// <returns></returns>
-    public async Task<dynamic> UpdateAsync(T entity, bool nullable = false)
-    {
-        // Create stringOfSets with entity's not null attribute(s) if nullable is false
-        IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
-        string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = @{x}"));
-
-        // Create stringOfSets with entity's all attribute(s) if nullable is true
-        if (nullable)
-        {
-            stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
-        }
-
-        var sql = $"update {TableName} set {stringOfSets} where {PrimaryKey?.Name} = @{PrimaryKey?.Name}";
-
-        using var connection = new NpgsqlConnection(_connStr);
-        _ = connection.OpenAsync();
-        var result = await connection.ExecuteAsync(sql, entity);
-        return result;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="entity"></param>
-    /// <param name="whereClause"></param>
-    /// <param name="nullable"></param>
-    /// <returns></returns>
-    public async Task<dynamic> UpdateAsync(T entity, string whereClause, bool nullable = false)
-    {
-        // Create stringOfSets with entity's not null attribute(s) if nullable is false
-        IEnumerable<string>? columns = Properties?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
-        string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = @{x}"));
-
-        // Create stringOfSets with entity's all attribute(s) if nullable is true
-        if (nullable)
-        {
-            stringOfSets = string.Join(", ", Columns.Select(x => $"{x} = @{x}"));
-        }
-
-        var sql = $"update {TableName} set {stringOfSets} where {whereClause}";
+        string sql = $"update {TableName} set {stringOfSets} where {whereClause}";
 
         using var connection = new NpgsqlConnection(_connStr);
         _ = connection.OpenAsync();

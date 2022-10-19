@@ -14,8 +14,8 @@ public interface IDatabaseManagerRepository
     List<T> Get<T>(string whereClause = null);
     Task<List<T>> GetAsync<T>(dynamic id);
     Task<List<T>> GetAsync<T>(string whereClause = null);
-    dynamic Update<T>(T entity, bool nullable = false, string whereClause = null);
-    Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string whereClause = null);
     List<T> Query<T>();
     Task<List<T>> QueryAsync<T>();
+    dynamic Update<T>(T entity, bool nullable = false, string whereClause = null);
+    Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string whereClause = null);
 }
