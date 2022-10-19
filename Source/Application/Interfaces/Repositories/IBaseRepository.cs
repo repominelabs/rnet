@@ -16,4 +16,5 @@ public interface IBaseRepository
     Task<List<T>> GetAsync<T>(string whereClause = null);
     dynamic Update<T>(T entity, bool nullable = false, string whereClause = null);
     Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string whereClause = null);
+    List<T> Query<T>();
 }
