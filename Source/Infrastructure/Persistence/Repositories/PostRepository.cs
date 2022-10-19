@@ -1,12 +1,11 @@
 ﻿using Application.Interfaces.Repositories;
 using Domain.Entities;
 
-namespace Infrastructure.Persistence.Repositories
+namespace Infrastructure.Persistence.Repositories;
+
+public class PostRepository : BaseRepository<Post>, IPostRepository
 {
-    public class PostRepository : BaseRepository<Post>, IPostRepository
+    public PostRepository(string connectionString) : base(connectionString)
     {
-        public PostRepository(string connectionString) : base(connectionString)
-        {
-        }
     }
 }
