@@ -4,8 +4,8 @@ namespace Application.Interfaces.DatabaseManagers;
 
 public interface IDatabaseManager
 {
-    dynamic Create<T>(T entity, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null);
-    Task<dynamic> CreateAsync<T>(T entity, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null);
+    dynamic Create<T>(T entity, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null, DbType dbType = DbType.Int32);
+    Task<dynamic> CreateAsync<T>(T entity, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null, DbType dbType = DbType.Int32);
     dynamic Delete<T>(string whereClause = null, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null);
     Task<dynamic> DeleteAsync<T>(string whereClause = null, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null);
     List<T> Get<T>(string whereClause = null, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null);

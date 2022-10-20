@@ -41,69 +41,125 @@ public class OracleDatabaseManager : IOracleDatabaseManager
         {
             using var connection = new OracleConnection(_connStr);
             var result = connection.Execute(sql, parameters, dbTransaction);
-            return parameters.Get<int>("lastcid");
+            return parameters.Get<dynamic>("lastcid");
         }
         else 
         {
             var result = dbConnection.Execute(sql, parameters, dbTransaction);
-            return parameters.Get<int>("lastcid");
+            return parameters.Get<dynamic>("lastcid");
         }
     }
 
-    public async Task<dynamic> CreateAsync<T>(T entity)
+    public async Task<dynamic> CreateAsync<T>(T entity, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null, DbType dbType = DbType.Int32)
     {
         IEnumerable<string?> columns = GetColumns<T>();
         var stringOfColumns = string.Join(", ", columns);
         var stringOfParameters = string.Join(", ", columns.Select(e => ":" + e));
-        var sql = $"insert into {_schema}.{GetTableName<T>()} ({stringOfColumns}) values ({stringOfParameters}) returning {GetPrimaryKey<T>()?.Name}";
+        var sql = $"insert into {_schema}.{GetTableName<T>()} ({stringOfColumns}) values ({stringOfParameters}) returning {GetPrimaryKey<T>()?.Name} into :lastcid";
 
-        using var connection = new OracleConnection(_connStr);
-        var result = await connection.ExecuteAsync(sql, entity);
-        return result;
+        DynamicParameters parameters = new(entity);
+        parameters.Add(name: "lastcid", dbType: dbType, direction: ParameterDirection.Output);
+
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            var result = await connection.ExecuteAsync(sql, parameters, dbTransaction);
+            return parameters.Get<dynamic>("lastcid");
+        }
+        else
+        {
+            var result = await dbConnection.ExecuteAsync(sql, parameters, dbTransaction);
+            return parameters.Get<dynamic>("lastcid");
+        }
     }
 
-    public async Task<dynamic> CreateAsync<T>(IDbConnection dbConnection, IDbTransaction dbTransaction, T entity)
+    public dynamic Delete<T>(string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        IEnumerable<string?> columns = GetColumns<T>();
-        var stringOfColumns = string.Join(", ", columns);
-        var stringOfParameters = string.Join(", ", columns.Select(e => ":" + e));
-        var sql = $"insert into {_schema}.{GetTableName<T>()} ({stringOfColumns}) values ({stringOfParameters}) returning {GetPrimaryKey<T>()?.Name}";
+        string sql;
+        if (string.IsNullOrEmpty(whereClause))
+        {
+            sql = $"delete from {GetTableName<T>()}";
+        }
+        else
+        {
+            sql = $"delete from {GetTableName<T>()} where {whereClause}";
+        }
 
-        var result = await dbConnection.ExecuteAsync(sql, entity, dbTransaction);
-        return result;
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            int result = connection.Execute(sql, null, dbTransaction);
+            return result;
+        }
+        else
+        {
+            int result = dbConnection.Execute(sql, null, dbTransaction);
+            return result;
+        }
     }
 
-    public dynamic Delete<T>(string whereClause)
+    public async Task<dynamic> DeleteAsync<T>(string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        var sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
+        string sql;
+        if (string.IsNullOrEmpty(whereClause))
+        {
+            sql = $"delete from {GetTableName<T>()}";
+        }
+        else
+        {
+            sql = $"delete from {GetTableName<T>()} where {whereClause}";
+        }
 
-        using var connection = new OracleConnection(_connStr);
-        var result = connection.Execute(sql);
-        return result;
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            int result = await connection.ExecuteAsync(sql, null, dbTransaction);
+            return result;
+        }
+        else
+        {
+            int result = await dbConnection.ExecuteAsync(sql, null, dbTransaction);
+            return result;
+        }
     }
 
-    public dynamic Delete<T>(IDbConnection dbConnection, IDbTransaction dbTransaction, string whereClause)
+    public List<T> Get<T>(string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        var sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
-
-        var result = dbConnection.Execute(sql, dbTransaction);
-        return result;
+        throw new NotImplementedException();
     }
 
-    public async Task<dynamic> DeleteAsync<T>(string whereClause)
+    public Task<List<T>> GetAsync<T>(string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        string sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
-
-        using var connection = new OracleConnection(_connStr);
-        var result = await connection.ExecuteAsync(sql);
-        return result;
+        throw new NotImplementedException();
     }
 
-    public async Task<dynamic> DeleteAsync<T>(IDbConnection dbConnection, IDbTransaction dbTransaction, string whereClause)
+    public List<T> Query<T>(string query, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        string sql = $"delete from {GetTableName<T>()} where 1 = 1 and {whereClause}";
+        throw new NotImplementedException();
+    }
 
-        var result = await dbConnection.ExecuteAsync(sql, null, dbTransaction);
-        return result;
+    public List<T> Query<T>(string query, object parameters, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<T>> QueryAsync<T>(string query, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<T>> QueryAsync<T>(string query, object parameters, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    {
+        throw new NotImplementedException();
+    }
+
+    public dynamic Update<T>(T entity, bool nullable = false, string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    {
+        throw new NotImplementedException();
     }
 }
