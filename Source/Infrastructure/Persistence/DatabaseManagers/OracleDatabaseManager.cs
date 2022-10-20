@@ -1,13 +1,10 @@
 ﻿using Application.Interfaces.DatabaseManagers;
 using Dapper;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Npgsql;
 using Oracle.ManagedDataAccess.Client;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Reflection;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Infrastructure.Persistence.DatabaseManagers;
 
