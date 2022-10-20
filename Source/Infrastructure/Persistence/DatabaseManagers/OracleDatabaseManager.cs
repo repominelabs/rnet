@@ -1,10 +1,13 @@
 ﻿using Application.Interfaces.DatabaseManagers;
 using Dapper;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Npgsql;
 using Oracle.ManagedDataAccess.Client;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Reflection;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Infrastructure.Persistence.DatabaseManagers;
 
@@ -25,7 +28,7 @@ public class OracleDatabaseManager : IOracleDatabaseManager
 
     private PropertyInfo? GetPrimaryKey<T>() => typeof(T).GetProperties().Where(x => x.GetCustomAttributes().Any(y => y.GetType() == typeof(KeyAttribute))).FirstOrDefault();
 
-    private IEnumerable<string?> GetColumns<T>() => typeof(T).GetProperties().Where(e => /* e.Name != PrimaryKey.Name &&*/ e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => e.GetCustomAttribute<ColumnAttribute>().Name);
+    private IEnumerable<string?> GetColumns<T>() => typeof(T).GetProperties().Where(e => /* e.Name != PrimaryKey.Name &&*/ e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => e.GetCustomAttribute<ColumnAttribute>()?.Name);
 
     public dynamic Create<T>(T entity, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null, DbType dbType = DbType.Int32)
     {
@@ -125,41 +128,192 @@ public class OracleDatabaseManager : IOracleDatabaseManager
 
     public List<T> Get<T>(string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        string sql;
+        if (!string.IsNullOrEmpty(whereClause))
+        {
+            sql = $"select * from {GetTableName<T>()} where {whereClause}";
+        }
+        else
+        {
+            sql = $"select * from {GetTableName<T>()}";
+        }
+
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            List<T> result = connection.Query<T>(sql, null, dbTransaction).ToList();
+            return result;
+        }
+        else
+        {
+            List<T> result = dbConnection.Query<T>(sql, null, dbTransaction).ToList();
+            return result;
+        }
     }
 
-    public Task<List<T>> GetAsync<T>(string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    public async Task<List<T>> GetAsync<T>(string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        string sql;
+        if (!string.IsNullOrEmpty(whereClause))
+        {
+            sql = $"select * from {GetTableName<T>()} where {whereClause}";
+        }
+        else
+        {
+            sql = $"select * from {GetTableName<T>()}";
+        }
+
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            IEnumerable<T> result = await connection.QueryAsync<T>(sql, null, dbTransaction);
+            return result.ToList();
+        }
+        else
+        {
+            IEnumerable<T> result = await dbConnection.QueryAsync<T>(sql, null, dbTransaction);
+            return result.ToList();
+        }
     }
 
     public List<T> Query<T>(string query, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            List<T> result = connection.Query<T>(query, null, dbTransaction).ToList();
+            return result;
+        }
+        else
+        {
+            List<T> result = dbConnection.Query<T>(query, null, dbTransaction).ToList();
+            return result;
+        }
     }
 
     public List<T> Query<T>(string query, object parameters, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        foreach (PropertyInfo property in parameters.GetType().GetProperties())
+        {
+            query = query.Replace($":{property.Name}", $"'{property.GetValue(parameters)}'");
+        }
+
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            List<T> result = connection.Query<T>(query, null, dbTransaction).ToList();
+            return result;
+        }
+        else
+        {
+            List<T> result = dbConnection.Query<T>(query, null, dbTransaction).ToList();
+            return result;
+        }
     }
 
-    public Task<List<T>> QueryAsync<T>(string query, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    public async Task<List<T>> QueryAsync<T>(string query, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            IEnumerable<T> result = await connection.QueryAsync<T>(query, null, dbTransaction);
+            return result.ToList();
+        }
+        else
+        {
+            IEnumerable<T> result = await dbConnection.QueryAsync<T>(query, null, dbTransaction);
+            return result.ToList();
+        }
     }
 
-    public Task<List<T>> QueryAsync<T>(string query, object parameters, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    public async Task<List<T>> QueryAsync<T>(string query, object parameters, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        foreach (PropertyInfo property in parameters.GetType().GetProperties())
+        {
+            query = query.Replace($":{property.Name}", $"'{property.GetValue(parameters)}'");
+        }
+
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            IEnumerable<T> result = await connection.QueryAsync<T>(query, null, dbTransaction);
+            return result.ToList();
+        }
+        else
+        {
+            IEnumerable<T> result = await dbConnection.QueryAsync<T>(query, null, dbTransaction);
+            return result.ToList();
+        }
     }
 
     public dynamic Update<T>(T entity, bool nullable = false, string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        // Create stringOfSets with entity's not null attribute(s) if nullable is false
+        IEnumerable<string>? columns = GetProperties<T>()?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
+        string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = :{x}"));
+
+        // Create stringOfSets with entity's all attribute(s) if nullable is true
+        if (nullable)
+        {
+            stringOfSets = string.Join(", ", GetColumns<T>().Select(x => $"{x} = :{x}"));
+        }
+
+        string sql;
+        if (!string.IsNullOrEmpty(whereClause))
+        {
+            sql = $"update {GetTableName<T>()} set {stringOfSets} where {whereClause}";
+        }
+        else
+        {
+            sql = $"update {GetTableName<T>()} set {stringOfSets} where {GetPrimaryKey<T>()? .GetCustomAttribute<ColumnAttribute>()?.Name} = :{GetPrimaryKey<T>()?.Name}";
+        }
+
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            var result = connection.Execute(sql, entity, dbTransaction);
+            return result;
+        }
+        else
+        {
+            var result =  dbConnection.Execute(sql, entity, dbTransaction);
+            return result;
+        }
+         
     }
 
-    public Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
+    public async Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
-        throw new NotImplementedException();
+        // Create stringOfSets with entity's not null attribute(s) if nullable is false
+        IEnumerable<string>? columns = GetProperties<T>()?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
+        string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = :{x}"));
+
+        // Create stringOfSets with entity's all attribute(s) if nullable is true
+        if (nullable)
+        {
+            stringOfSets = string.Join(", ", GetColumns<T>().Select(x => $"{x} = :{x}"));
+        }
+
+        string sql;
+        if (!string.IsNullOrEmpty(whereClause))
+        {
+            sql = $"update {GetTableName<T>()} set {stringOfSets} where {whereClause}";
+        }
+        else
+        {
+            sql = $"update {GetTableName<T>()} set {stringOfSets} where {GetPrimaryKey<T>()?.GetCustomAttribute<ColumnAttribute>()?.Name} = :{GetPrimaryKey<T>()?.Name}";
+        }
+
+        if (dbConnection == null)
+        {
+            using var connection = new OracleConnection(_connStr);
+            var result = await connection.ExecuteAsync(sql, entity, dbTransaction);
+            return result;
+        }
+        else
+        {
+            var result = await dbConnection.ExecuteAsync(sql, entity, dbTransaction);
+            return result;
+        }
     }
 }
