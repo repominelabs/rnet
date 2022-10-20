@@ -1,10 +1,9 @@
 ﻿using Domain.Common;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities;
 
-[Table("post")]
+[Table("posts")]
 public class Post : BaseAuditableEntity
 {
     [Column("user_id")]

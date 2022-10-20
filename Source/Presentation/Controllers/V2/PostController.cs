@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.V2;
 
-[Route("Api/V{version:apiVersion}/[controller]/[action]")]
+[Route("Api/V{version:apiVersion}/[controller]")]
 [ApiVersion("2.0")]
 public class PostController : BaseController
 {
@@ -16,30 +16,29 @@ public class PostController : BaseController
         _postService = postService;
     }
 
-    [HttpPost]
+    [HttpPost("Create")]
     public async Task<ActionResult<int>> Create(CreatePostCommand command)
     {
         return await Mediator.Send(command);
     }
 
-    [HttpPost]
+    [HttpPost("Update")]
     public async Task<ActionResult<int>> Update(UpdatePostCommand command)
     {
         return await Mediator.Send(command);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<string>> CreatePostsAsync([FromBody] List<Post> request)
-    {
-        var res = await _postService.CreatePostsAsync(request);
-        return Ok(res);
-    }
-
-    [HttpPost]
+    [HttpPost("CreatePosts")]
     public ActionResult<string> CreatePosts([FromBody] List<Post> request)
     {
         var res = _postService.CreatePosts(request);
-        return Ok(res);
+        return Ok();
     }
 
+    [HttpPost("CreatePostsAsync")]
+    public async Task<ActionResult<string>> CreatePostsAsync([FromBody] List<Post> request)
+    {
+        var res = await _postService.CreatePostsAsync(request);
+        return Ok();
+    }
 }

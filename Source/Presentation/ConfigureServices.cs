@@ -5,7 +5,6 @@ using Presentation.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Presentation.Handlers;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 
 namespace Presentation;
 

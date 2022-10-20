@@ -25,13 +25,14 @@ public class OracleDatabaseManager : IOracleDatabaseManager
 
     private PropertyInfo? GetPrimaryKey<T>() => typeof(T).GetProperties().Where(x => x.GetCustomAttributes().Any(y => y.GetType() == typeof(KeyAttribute))).FirstOrDefault();
 
-    private IEnumerable<string?> GetColumns<T>() => typeof(T).GetProperties().Where(e => /* e.Name != PrimaryKey.Name &&*/ e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => e.GetCustomAttribute<ColumnAttribute>()?.Name);
+    private IEnumerable<string?> GetColumns<T>() => typeof(T).GetProperties().Where(e => e.Name != GetPrimaryKey<T>().Name && e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => e.GetCustomAttribute<ColumnAttribute>()?.Name);
+
+    private IEnumerable<string> GetColumnPropertyNames<T>() => typeof(T).GetProperties().Where(e => e.Name != GetPrimaryKey<T>().Name && e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => e.Name);
 
     public dynamic Create<T>(T entity, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null, DbType dbType = DbType.Int32)
     {
-        IEnumerable<string?> columns = GetColumns<T>();
-        var stringOfColumns = string.Join(", ", columns);
-        var stringOfParameters = string.Join(", ", columns.Select(e => ":" + e));
+        var stringOfColumns = string.Join(", ", GetColumns<T>());
+        var stringOfParameters = string.Join(", ", GetColumnPropertyNames<T>().Select(e => ":" + e));
         var sql = $"insert into {_schema}.{GetTableName<T>()} ({stringOfColumns}) values ({stringOfParameters}) returning {GetPrimaryKey<T>()?.Name} into :lastcid";
 
         DynamicParameters parameters = new(entity);
@@ -52,9 +53,8 @@ public class OracleDatabaseManager : IOracleDatabaseManager
 
     public async Task<dynamic> CreateAsync<T>(T entity, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null, DbType dbType = DbType.Int32)
     {
-        IEnumerable<string?> columns = GetColumns<T>();
-        var stringOfColumns = string.Join(", ", columns);
-        var stringOfParameters = string.Join(", ", columns.Select(e => ":" + e));
+        var stringOfColumns = string.Join(", ", GetColumns<T>());
+        var stringOfParameters = string.Join(", ", GetColumnPropertyNames<T>().Select(e => ":" + e));
         var sql = $"insert into {_schema}.{GetTableName<T>()} ({stringOfColumns}) values ({stringOfParameters}) returning {GetPrimaryKey<T>()?.Name} into :lastcid";
 
         DynamicParameters parameters = new(entity);
@@ -78,11 +78,11 @@ public class OracleDatabaseManager : IOracleDatabaseManager
         string sql;
         if (string.IsNullOrEmpty(whereClause))
         {
-            sql = $"delete from {GetTableName<T>()}";
+            sql = $"delete from {_schema}.{GetTableName<T>()}";
         }
         else
         {
-            sql = $"delete from {GetTableName<T>()} where {whereClause}";
+            sql = $"delete from {_schema}.{GetTableName<T>()} where {whereClause}";
         }
 
         if (dbConnection == null)
@@ -103,11 +103,11 @@ public class OracleDatabaseManager : IOracleDatabaseManager
         string sql;
         if (string.IsNullOrEmpty(whereClause))
         {
-            sql = $"delete from {GetTableName<T>()}";
+            sql = $"delete from {_schema}.{GetTableName<T>()}";
         }
         else
         {
-            sql = $"delete from {GetTableName<T>()} where {whereClause}";
+            sql = $"delete from {_schema}.{GetTableName<T>()} where {whereClause}";
         }
 
         if (dbConnection == null)
@@ -128,11 +128,11 @@ public class OracleDatabaseManager : IOracleDatabaseManager
         string sql;
         if (!string.IsNullOrEmpty(whereClause))
         {
-            sql = $"select * from {GetTableName<T>()} where {whereClause}";
+            sql = $"select * from {_schema}.{GetTableName<T>()} where {whereClause}";
         }
         else
         {
-            sql = $"select * from {GetTableName<T>()}";
+            sql = $"select * from {_schema}.{GetTableName<T>()}";
         }
 
         if (dbConnection == null)
@@ -153,11 +153,11 @@ public class OracleDatabaseManager : IOracleDatabaseManager
         string sql;
         if (!string.IsNullOrEmpty(whereClause))
         {
-            sql = $"select * from {GetTableName<T>()} where {whereClause}";
+            sql = $"select * from {_schema}.{GetTableName<T>()} where {whereClause}";
         }
         else
         {
-            sql = $"select * from {GetTableName<T>()}";
+            sql = $"select * from {_schema}.{GetTableName<T>()}";
         }
 
         if (dbConnection == null)
@@ -246,23 +246,27 @@ public class OracleDatabaseManager : IOracleDatabaseManager
     public dynamic Update<T>(T entity, bool nullable = false, string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
         // Create stringOfSets with entity's not null attribute(s) if nullable is false
-        IEnumerable<string>? columns = GetProperties<T>()?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
-        string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = :{x}"));
+        string stringOfSets;
 
         // Create stringOfSets with entity's all attribute(s) if nullable is true
         if (nullable)
         {
-            stringOfSets = string.Join(", ", GetColumns<T>().Select(x => $"{x} = :{x}"));
+            stringOfSets = string.Join(", ", GetProperties<T>().Where(e => e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => $"{e.GetCustomAttribute<ColumnAttribute>().Name} = :{e.Name}"));
+        }
+        else
+        {
+            string[] propertyNames = entity.GetType().GetProperties().Where(x => x.GetCustomAttribute<ColumnAttribute>() != null && x.GetValue(entity) != null).Select(x => x.GetCustomAttribute<ColumnAttribute>().Name).ToArray(); 
+            stringOfSets = string.Join(" , ", propertyNames.Select(propertyName => propertyName + " = :" + entity.GetType().GetProperties().Where(x => x.GetCustomAttribute<ColumnAttribute>() != null && x.GetCustomAttribute<ColumnAttribute>().Name == propertyName).Select(e => e.Name).FirstOrDefault()));
         }
 
         string sql;
         if (!string.IsNullOrEmpty(whereClause))
         {
-            sql = $"update {GetTableName<T>()} set {stringOfSets} where {whereClause}";
+            sql = $"update {_schema}.{GetTableName<T>()} set {stringOfSets} where {whereClause}";
         }
         else
         {
-            sql = $"update {GetTableName<T>()} set {stringOfSets} where {GetPrimaryKey<T>()? .GetCustomAttribute<ColumnAttribute>()?.Name} = :{GetPrimaryKey<T>()?.Name}";
+            sql = $"update {_schema}.{GetTableName<T>()} set {stringOfSets} where {GetPrimaryKey<T>()? .GetCustomAttribute<ColumnAttribute>()?.Name} = :{GetPrimaryKey<T>()?.Name}";
         }
 
         if (dbConnection == null)
@@ -276,29 +280,32 @@ public class OracleDatabaseManager : IOracleDatabaseManager
             var result =  dbConnection.Execute(sql, entity, dbTransaction);
             return result;
         }
-         
     }
 
     public async Task<dynamic> UpdateAsync<T>(T entity, bool nullable = false, string? whereClause = null, IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null)
     {
         // Create stringOfSets with entity's not null attribute(s) if nullable is false
-        IEnumerable<string>? columns = GetProperties<T>()?.Where(x => x.GetValue(entity, null) != null)?.Select(x => x.Name);
-        string stringOfSets = string.Join(", ", columns?.Select(x => $"{x} = :{x}"));
+        string stringOfSets;
 
         // Create stringOfSets with entity's all attribute(s) if nullable is true
         if (nullable)
         {
-            stringOfSets = string.Join(", ", GetColumns<T>().Select(x => $"{x} = :{x}"));
+            stringOfSets = string.Join(", ", GetProperties<T>().Where(e => e.GetCustomAttribute<ColumnAttribute>() != null).Select(e => $"{e.GetCustomAttribute<ColumnAttribute>().Name} = :{e.Name}"));
+        }
+        else
+        {
+            string[] propertyNames = entity.GetType().GetProperties().Where(x => x.GetCustomAttribute<ColumnAttribute>() != null && x.GetValue(entity) != null).Select(x => x.GetCustomAttribute<ColumnAttribute>().Name).ToArray();
+            stringOfSets = string.Join(" , ", propertyNames.Select(propertyName => propertyName + " = :" + entity.GetType().GetProperties().Where(x => x.GetCustomAttribute<ColumnAttribute>() != null && x.GetCustomAttribute<ColumnAttribute>().Name == propertyName).Select(e => e.Name).FirstOrDefault()));
         }
 
         string sql;
         if (!string.IsNullOrEmpty(whereClause))
         {
-            sql = $"update {GetTableName<T>()} set {stringOfSets} where {whereClause}";
+            sql = $"update {_schema}.{GetTableName<T>()} set {stringOfSets} where {whereClause}";
         }
         else
         {
-            sql = $"update {GetTableName<T>()} set {stringOfSets} where {GetPrimaryKey<T>()?.GetCustomAttribute<ColumnAttribute>()?.Name} = :{GetPrimaryKey<T>()?.Name}";
+            sql = $"update {_schema}.{GetTableName<T>()} set {stringOfSets} where {GetPrimaryKey<T>()?.GetCustomAttribute<ColumnAttribute>()?.Name} = :{GetPrimaryKey<T>()?.Name}";
         }
 
         if (dbConnection == null)

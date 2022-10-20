@@ -2,24 +2,27 @@
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
+using Microsoft.Extensions.Configuration;
 using Oracle.ManagedDataAccess.Client;
 
 namespace Application.Services;
 
 public class PostService : IPostService
 {
+    private readonly IConfiguration _configuration;
 	private readonly IPostRepository _postRepository;
     private readonly IDatabaseManager _databaseManager ;
 
-    public PostService(IPostRepository postRepository, IDatabaseManager databaseManager)
+    public PostService(IConfiguration configuration, IPostRepository postRepository, IDatabaseManager databaseManager)
 	{
+        _configuration = configuration;
 		_postRepository = postRepository;
 		_databaseManager = databaseManager;
 	}
 
 	public dynamic CreatePosts(List<Post> request)
 	{
-        using (var conn = new OracleConnection("{connection string}"))
+        using (var conn = new OracleConnection(_configuration.GetConnectionString("DefaultConnection")))
         {
             conn.Open();
             // Create the transaction
@@ -63,7 +66,7 @@ public class PostService : IPostService
 
 	public async Task<dynamic> CreatePostsAsync(List<Post> request)
 	{
-        using (var conn = new OracleConnection("{connection string}"))
+        using (var conn = new OracleConnection(_configuration.GetConnectionString("DefaultConnection")))
         {
             conn.Open();
             // Create the transaction
