@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities;
 
-[Table("comment")]
+[Table("comments")]
 public class Comment : BaseAuditableEntity
 {
     [Column("post_id")]

@@ -2,6 +2,6 @@
 
 namespace Infrastructure.Persistence.DatabaseManagers;
 
-public class PostgreSqlDatabaseManager : IPostgreSqlDatabaseManager
+public class PostgreSqlDatabaseManager
 {
 }
