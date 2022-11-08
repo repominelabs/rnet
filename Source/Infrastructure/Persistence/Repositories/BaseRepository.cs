@@ -2,7 +2,6 @@
 using Cinis.PostgreSql;
 using Domain.Entities;
 using Npgsql;
-using System.Data;
 
 namespace Infrastructure.Persistence.Repositories;
 
@@ -24,8 +23,8 @@ public class BaseRepository<T> : IBaseRepository<T>
         connection.Open();
         try
         {
-            int id = connection.Create(entity);
-            return id;
+            dynamic response = connection.Create(entity);
+            return response;
         }
         catch (Exception ex)
         {
@@ -40,8 +39,8 @@ public class BaseRepository<T> : IBaseRepository<T>
         await connection.OpenAsync();
         try
         {
-            int id = await connection.CreateAsync(entity);
-            return id;
+            dynamic response = await connection.CreateAsync(entity);
+            return response;
         }
         catch (Exception ex)
         {
@@ -50,19 +49,30 @@ public class BaseRepository<T> : IBaseRepository<T>
         }
     }
 
-    public dynamic CreateOrUpdate(T entity, bool nullable = false, string? whereClause = null, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null, DbType dbType = DbType.Int32)
+    public dynamic CreateOrUpdate(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public Task<dynamic> CreateOrUpdateAsync(T entity, bool nullable = false, string? whereClause = null, IDbConnection dbConnection = null, IDbTransaction dbTransaction = null, DbType dbType = DbType.Int32)
+    public Task<dynamic> CreateOrUpdateAsync(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public dynamic Delete(dynamic? id = null, string? whereClause = null)
+    public dynamic Delete(dynamic id, string whereClause)
     {
-        throw new NotImplementedException();
+        using var connection = new NpgsqlConnection(_connStr);
+        connection.Open();
+        try
+        {
+            dynamic response = connection.Delete<T>(id: id, whereClause: whereClause);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            throw;
+        }
     }
 
     public Task<dynamic> DeleteAsync(dynamic? id = null, string? whereClause = null)
