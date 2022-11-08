@@ -1,6 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
 using Cinis.PostgreSql;
-using Domain.Entities;
 using Npgsql;
 
 namespace Infrastructure.Persistence.Repositories;
