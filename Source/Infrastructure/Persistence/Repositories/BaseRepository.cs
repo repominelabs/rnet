@@ -16,13 +16,13 @@ public class BaseRepository<T> : IBaseRepository<T>
         _connStr = connStr;
     }
 
-    public dynamic Create(T entity)
+    public object Create(T entity)
     {
         using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         try
         {
-            dynamic response = connection.Create(entity);
+            object response = connection.Create(entity);
             return response;
         }
         catch (Exception ex)
@@ -32,13 +32,13 @@ public class BaseRepository<T> : IBaseRepository<T>
         }
     }
 
-    public async Task<dynamic> CreateAsync(T entity)
+    public async Task<object> CreateAsync(T entity)
     {
         using var connection = new NpgsqlConnection(_connStr);
         await connection.OpenAsync();
         try
         {
-            dynamic response = await connection.CreateAsync(entity);
+            object response = await connection.CreateAsync(entity);
             return response;
         }
         catch (Exception ex)
@@ -48,23 +48,23 @@ public class BaseRepository<T> : IBaseRepository<T>
         }
     }
 
-    public dynamic CreateOrUpdate(T entity, bool nullable = false, string? whereClause = null)
+    public object CreateOrUpdate(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public Task<dynamic> CreateOrUpdateAsync(T entity, bool nullable = false, string? whereClause = null)
+    public Task<object> CreateOrUpdateAsync(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public dynamic Delete(dynamic id, string whereClause)
+    public object Delete(object id, string whereClause)
     {
         using var connection = new NpgsqlConnection(_connStr);
         connection.Open();
         try
         {
-            dynamic response = connection.Delete<T>(id: id, whereClause: whereClause);
+            object response = connection.Delete<T>(id, whereClause);
             return response;
         }
         catch (Exception ex)
@@ -74,27 +74,38 @@ public class BaseRepository<T> : IBaseRepository<T>
         }
     }
 
-    public Task<dynamic> DeleteAsync(dynamic? id = null, string? whereClause = null)
+    public async Task<object> DeleteAsync(object? id = null, string? whereClause = null)
+    {
+        using var connection = new NpgsqlConnection(_connStr);
+        await connection.OpenAsync();
+        try
+        {
+            object response = await connection.DeleteAsync<T>(id, whereClause);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            throw;
+        }
+    }
+
+    public List<T> Read(object? id = null, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public List<T> Read(dynamic? id = null, string? whereClause = null)
+    public Task<List<T>> ReadAsync(object? id = null, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public Task<List<T>> ReadAsync(dynamic? id = null, string? whereClause = null)
+    public object Update(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
 
-    public dynamic Update(T entity, bool nullable = false, string? whereClause = null)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<dynamic> UpdateAsync(T entity, bool nullable = false, string? whereClause = null)
+    public Task<object> UpdateAsync(T entity, bool nullable = false, string? whereClause = null)
     {
         throw new NotImplementedException();
     }
