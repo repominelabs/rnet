@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositories;
 using Cinis.PostgreSql;
+using Domain.Entities;
 using Npgsql;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -92,7 +93,18 @@ public class BaseRepository<T> : IBaseRepository<T>
 
     public List<T> Read(object? id = null, string? whereClause = null)
     {
-        throw new NotImplementedException();
+        using var connection = new NpgsqlConnection(_connStr);
+        connection.Open();
+        try
+        {
+            List<T> response = connection.Read<T>(id, whereClause);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            throw;
+        }
     }
 
     public Task<List<T>> ReadAsync(object? id = null, string? whereClause = null)
