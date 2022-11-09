@@ -1,6 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
 using Cinis.PostgreSql;
-using Domain.Entities;
 using Npgsql;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -125,7 +124,18 @@ public class BaseRepository<T> : IBaseRepository<T>
 
     public object Update(T entity, bool nullable = false, string? whereClause = null)
     {
-        throw new NotImplementedException();
+        using var connection = new NpgsqlConnection(_connStr);
+        connection.Open();
+        try
+        {
+            object response = connection.Update(entity, nullable, whereClause);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            throw;
+        }
     }
 
     public Task<object> UpdateAsync(T entity, bool nullable = false, string? whereClause = null)
