@@ -138,8 +138,19 @@ public class BaseRepository<T> : IBaseRepository<T>
         }
     }
 
-    public Task<object> UpdateAsync(T entity, bool nullable = false, string? whereClause = null)
+    public async Task<object> UpdateAsync(T entity, bool nullable = false, string? whereClause = null)
     {
-        throw new NotImplementedException();
+        using var connection = new NpgsqlConnection(_connStr);
+        await connection.OpenAsync();
+        try
+        {
+            object response = await connection.UpdateAsync(entity, nullable, whereClause);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            throw;
+        }
     }
 }
