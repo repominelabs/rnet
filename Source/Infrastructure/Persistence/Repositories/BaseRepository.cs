@@ -107,9 +107,20 @@ public class BaseRepository<T> : IBaseRepository<T>
         }
     }
 
-    public Task<List<T>> ReadAsync(object? id = null, string? whereClause = null)
+    public async Task<List<T>> ReadAsync(object? id = null, string? whereClause = null)
     {
-        throw new NotImplementedException();
+        using var connection = new NpgsqlConnection(_connStr);
+        await connection.OpenAsync();
+        try
+        {
+            List<T> response = await connection.ReadAsync<T>(id, whereClause);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            throw;
+        }
     }
 
     public object Update(T entity, bool nullable = false, string? whereClause = null)
