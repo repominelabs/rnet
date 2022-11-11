@@ -65,9 +65,22 @@ public class BaseRepository<T> : IBaseRepository<T>
         }
     }
 
-    public Task<object> CreateOrUpdateAsync(T entity, bool nullable = false, string? whereClause = null)
+    public async Task<object> CreateOrUpdateAsync(T entity, bool nullable = false, object? id = null, string? whereClause = null)
     {
-        throw new NotImplementedException();
+        var existingEntities = await ReadAsync(id, whereClause);
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+        T existingEntity = existingEntities.FirstOrDefault();
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+        if (existingEntity != null)
+        {
+            object response = await UpdateAsync(entity, nullable, whereClause);
+            return response;
+        }
+        else
+        {
+            object response = await CreateAsync(entity);
+            return response;
+        }
     }
 
     public object Delete(object id, string whereClause)
