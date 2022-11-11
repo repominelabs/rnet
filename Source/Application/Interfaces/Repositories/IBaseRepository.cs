@@ -4,7 +4,7 @@ public interface IBaseRepository<T>
 {
     object Create(T entity);
     Task<object> CreateAsync(T entity);
-    object CreateOrUpdate(T entity, bool nullable = false, string whereClause = null);
+    object CreateOrUpdate(T entity, bool nullable = false, object? id = null, string? whereClause = null);
     Task<object> CreateOrUpdateAsync(T entity, bool nullable = false, string whereClause = null);
     object Delete(object id = null, string whereClause = null);
     Task<object> DeleteAsync(object id = null, string whereClause = null);
