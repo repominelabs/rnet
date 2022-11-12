@@ -8,13 +8,13 @@ public class BaseExceptionFilter : ExceptionFilterAttribute, IExceptionFilter
 {
     private readonly ILogger _logger;
 
-	public BaseExceptionFilter(ILogger<BaseExceptionFilter> logManager)
-	{
-		_logger = logManager;
-	}
+    public BaseExceptionFilter(ILogger<BaseExceptionFilter> logManager)
+    {
+        _logger = logManager;
+    }
 
-	public override void OnException(ExceptionContext context)
-	{
+    public override void OnException(ExceptionContext context)
+    {
         int statusCode;
 
         if (context.Exception is ArgumentNullException) statusCode = (int)HttpStatusCode.BadRequest;
@@ -40,5 +40,5 @@ public class BaseExceptionFilter : ExceptionFilterAttribute, IExceptionFilter
 
         // Set the result
         context.Result = result;
-	}
+    }
 }

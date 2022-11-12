@@ -19,7 +19,7 @@ public class DeletePostCommandHandler : IRequestHandler<DeletePostCommand, int>
 
     public Task<int> Handle(DeletePostCommand request, CancellationToken cancellationToken)
     {
-        Domain.Entities.Post post = new () { Id = request.Id };
+        Domain.Entities.Post post = new() { Id = request.Id };
         _context.Posts.Remove(post);
         return Task.FromResult(0);
     }

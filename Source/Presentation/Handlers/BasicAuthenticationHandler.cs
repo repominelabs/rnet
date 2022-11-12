@@ -51,7 +51,7 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
             return AuthenticateResult.Fail("Invalid Authorization Header");
         }
 
-        var claims = new[] 
+        var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, "changeme"),
             new Claim(ClaimTypes.Name, "changeme"),

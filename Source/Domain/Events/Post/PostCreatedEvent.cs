@@ -4,10 +4,10 @@ namespace Domain.Events.Post;
 
 public class PostCreatedEvent : BaseEvent
 {
-	public Entities.Post Post { get; }
+    public Entities.Post Post { get; }
 
-	public PostCreatedEvent(Entities.Post post)
-	{
-		Post = post;
-	}
+    public PostCreatedEvent(Entities.Post post)
+    {
+        Post = post;
+    }
 }

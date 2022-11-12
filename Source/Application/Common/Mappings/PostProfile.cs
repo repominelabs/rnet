@@ -5,8 +5,8 @@ namespace Application.Common.Mappings;
 
 public class PostProfile : Profile
 {
-	public PostProfile()
-	{
+    public PostProfile()
+    {
         CreateMap<CreatePostCommand, Domain.Entities.Post>();
     }
 }

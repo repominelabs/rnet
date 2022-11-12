@@ -1,10 +1,10 @@
 ﻿using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Mvc.Versioning;
-using Microsoft.AspNetCore.Mvc;
-using Presentation.Filters;
 using Microsoft.AspNetCore.Authentication;
-using Presentation.Handlers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.OpenApi.Models;
+using Presentation.Filters;
+using Presentation.Handlers;
 
 namespace Presentation;
 
@@ -48,7 +48,7 @@ public static class ConfigureServices
 
         #region Swagger Configurations
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        services.AddEndpointsApiExplorer();        
+        services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
             options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
