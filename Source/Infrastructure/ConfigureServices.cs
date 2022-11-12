@@ -1,8 +1,6 @@
 ﻿using Application.Interfaces.Contexts;
-using Application.Interfaces.DatabaseManagers;
 using Application.Interfaces.Repositories;
 using Infrastructure.Persistence.Contexts;
-using Infrastructure.Persistence.DatabaseManagers;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -23,10 +21,9 @@ public static class ConfigureServices
 
         _ = services
             .AddTransient<IApplicationDbContext, ApplicationDbContext>()
-            .AddTransient<ICommentRepository, CommentRepository>(x => new (configuration["ConnectionStrings:DefaultConnection"], new OracleDatabaseManager(configuration["ConnectionStrings:DefaultConnection"], "oclk")))
-            .AddTransient<IPostRepository, PostRepository>(x => new (configuration["ConnectionStrings:DefaultConnection"], new OracleDatabaseManager(configuration["ConnectionStrings:DefaultConnection"], "oclk")))
-            .AddTransient<IUnitOfWork, UnitOfWork>()
-            .AddTransient<IDatabaseManager, OracleDatabaseManager>(x => new OracleDatabaseManager(configuration["ConnectionStrings:DefaultConnection"], "oclk"));
+            .AddTransient<ICommentRepository, CommentRepository>(x => new(configuration["ConnectionStrings:DefaultConnection"]))
+            .AddTransient<IPostRepository, PostRepository>(x => new(configuration["ConnectionStrings:DefaultConnection"]))
+            .AddTransient<IUnitOfWork, UnitOfWork>();
         return services;
     }
 }

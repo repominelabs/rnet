@@ -1,6 +1,4 @@
-﻿using Application.Interfaces.Services;
-using Application.Services;
-using FluentValidation;
+﻿using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +14,6 @@ public static class ConfigureServices
         {
             throw new ArgumentNullException(nameof(configuration));
         }
-        services.AddTransient<IPostService, PostService>();
 
         services.AddAutoMapper(Assembly.GetExecutingAssembly());
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
