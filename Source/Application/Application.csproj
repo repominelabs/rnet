@@ -8,6 +8,8 @@
   <ItemGroup>
     <Folder Include="Common\Mappings\" />
     <Folder Include="Features\Post\Queries\" />
+    <Folder Include="Interfaces\Repositories\Dapper\" />
+    <Folder Include="Interfaces\Repositories\EFCore\" />
     <Folder Include="Interfaces\Services\" />
     <Folder Include="Models\" />
     <Folder Include="Services\" />
