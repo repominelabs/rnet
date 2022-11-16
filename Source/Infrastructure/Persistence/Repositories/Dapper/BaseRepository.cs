@@ -2,7 +2,7 @@
 using Cinis.PostgreSql;
 using Npgsql;
 
-namespace Infrastructure.Persistence.Repositories;
+namespace Infrastructure.Persistence.Repositories.Dapper;
 
 /// <summary>
 /// 

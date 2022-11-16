@@ -1,6 +1,6 @@
 ﻿using Application.Interfaces.Repositories;
 
-namespace Infrastructure.Persistence.Repositories;
+namespace Infrastructure.Persistence.Repositories.Dapper;
 
 public class UnitOfWork : IUnitOfWork
 {
