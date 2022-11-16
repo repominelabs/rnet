@@ -1,4 +1,4 @@
-﻿namespace Application.Interfaces.Repositories;
+﻿namespace Application.Interfaces.Repositories.Dapper;
 
 public interface IUnitOfWork
 {
