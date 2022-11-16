@@ -1,5 +1,4 @@
-﻿using Application.Interfaces.Repositories;
-using Application.Interfaces.Repositories.Dapper;
+﻿using Application.Interfaces.Repositories.Dapper;
 
 namespace Infrastructure.Persistence.Repositories.Dapper;
 

@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Interfaces.Repositories.Dapper;
 using Domain.Entities;
 using Infrastructure.Persistence.Repositories.Dapper;
 

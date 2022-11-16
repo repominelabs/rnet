@@ -1,5 +1,4 @@
 ﻿using Application.Interfaces.Contexts;
-using Application.Interfaces.Repositories;
 using Application.Interfaces.Repositories.Dapper;
 using Infrastructure.Persistence.Contexts;
 using Infrastructure.Persistence.Repositories;
