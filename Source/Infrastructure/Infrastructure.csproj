@@ -9,7 +9,6 @@
   <ItemGroup>
     <Folder Include="Identity\" />
     <Folder Include="Persistence\Repositories\EFCore\" />
-    <Folder Include="Persistence\Repositories\Dapper\" />
   </ItemGroup>
 
   <ItemGroup>
