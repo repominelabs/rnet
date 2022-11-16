@@ -1,7 +1,6 @@
 ﻿using Application.Interfaces.Contexts;
 using Application.Interfaces.Repositories.Dapper;
 using Infrastructure.Persistence.Contexts;
-using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence.Repositories.Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

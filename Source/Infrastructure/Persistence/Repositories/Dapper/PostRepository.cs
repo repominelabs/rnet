@@ -1,8 +1,7 @@
 ﻿using Application.Interfaces.Repositories.Dapper;
 using Domain.Entities;
-using Infrastructure.Persistence.Repositories.Dapper;
 
-namespace Infrastructure.Persistence.Repositories;
+namespace Infrastructure.Persistence.Repositories.Dapper;
 
 public class PostRepository : BaseRepository<Post>, IPostRepository
 {
