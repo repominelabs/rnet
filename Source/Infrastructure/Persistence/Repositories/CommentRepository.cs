@@ -1,7 +1,7 @@
-﻿using Application.Interfaces.Repositories.Dapper;
+﻿using Application.Interfaces.Repositories;
 using Domain.Entities;
 
-namespace Infrastructure.Persistence.Repositories.Dapper;
+namespace Infrastructure.Persistence.Repositories;
 
 public class CommentRepository : BaseRepository<Comment>, ICommentRepository
 {

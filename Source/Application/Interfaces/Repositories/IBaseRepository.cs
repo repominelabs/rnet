@@ -1,4 +1,4 @@
-﻿namespace Application.Interfaces.Repositories.Dapper;
+﻿namespace Application.Interfaces.Repositories;
 
 public interface IBaseRepository<T>
 {

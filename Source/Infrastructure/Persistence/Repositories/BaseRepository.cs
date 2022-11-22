@@ -1,8 +1,8 @@
-﻿using Application.Interfaces.Repositories.Dapper;
+﻿using Application.Interfaces.Repositories;
 using Cinis.PostgreSql;
 using Npgsql;
 
-namespace Infrastructure.Persistence.Repositories.Dapper;
+namespace Infrastructure.Persistence.Repositories;
 
 /// <summary>
 /// 
