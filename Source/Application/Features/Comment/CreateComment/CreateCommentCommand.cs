@@ -1,4 +1,9 @@
-﻿using MediatR;
+﻿using Application.Features.Post.Commands.CreatePost;
+using Application.Interfaces.Contexts;
+using AutoMapper;
+using Domain.Events.Comment;
+using Domain.Events.Post;
+using MediatR;
 
 namespace Application.Features.Comment.CreateComment;
 
@@ -12,8 +17,23 @@ public class CreateCommentCommand : IRequest<int>
 
 public class CreateCommentCommandHandler : IRequestHandler<CreateCommentCommand, int>
 {
-    public Task<int> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
+
+    public CreateCommentCommandHandler(IApplicationDbContext context, IMapper mapper)
     {
-        throw new NotImplementedException();
+        _context = context;
+        _mapper = mapper;
+    }
+
+    public async Task<int> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
+    {
+        Domain.Entities.Comment comment = _mapper.Map<CreateCommentCommand, Domain.Entities.Comment>(request);
+
+        comment.AddDomainEvent(new CommentCreatedEvent(comment));
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return comment.Id;
     }
 }
