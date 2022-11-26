@@ -1,4 +1,5 @@
 ﻿using Application.Features.Post.Commands.CreatePost;
+using Application.Features.Post.Commands.DeletePost;
 using Application.Features.Post.Commands.UpdatePost;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +15,12 @@ public class PostController : BaseController
 
     [HttpPost("Create")]
     public async Task<ActionResult<int>> Create(CreatePostCommand command)
+    {
+        return await Mediator.Send(command);
+    }
+
+    [HttpPost("Delete")]
+    public async Task<ActionResult<int>> Delete(DeletePostCommand command)
     {
         return await Mediator.Send(command);
     }
