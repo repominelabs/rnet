@@ -1,4 +1,6 @@
 ﻿using Application.Features.Comment.CreateComment;
+using Application.Features.Comment.DeleteComment;
+using Application.Features.Comment.UpdateComment;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.V2;
@@ -9,6 +11,18 @@ public class CommentController : BaseController
 {
     [HttpPost]
     public async Task<ActionResult<int>> Create(CreateCommentCommand command)
+    {
+        return await Mediator.Send(command);
+    }
+
+    [HttpPost("Delete")]
+    public async Task<ActionResult<int>> Delete(DeleteCommentCommand command)
+    {
+        return await Mediator.Send(command);
+    }
+
+    [HttpPost("Update")]
+    public async Task<ActionResult<int>> Update(UpdateCommentCommand command)
     {
         return await Mediator.Send(command);
     }
