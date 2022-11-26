@@ -15,13 +15,13 @@ public class CommentController : BaseController
         return await Mediator.Send(command);
     }
 
-    [HttpPost("Delete")]
+    [HttpPost]
     public async Task<ActionResult<int>> Delete(DeleteCommentCommand command)
     {
         return await Mediator.Send(command);
     }
 
-    [HttpPost("Update")]
+    [HttpPost]
     public async Task<ActionResult<int>> Update(UpdateCommentCommand command)
     {
         return await Mediator.Send(command);

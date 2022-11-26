@@ -5,27 +5,23 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.V2;
 
-[Route("Api/V{version:apiVersion}/[controller]")]
+[Route("Api/V{version:apiVersion}/[controller]/[action]")]
 [ApiVersion("2.0")]
 public class PostController : BaseController
 {
-    public PostController()
-    {
-    }
-
-    [HttpPost("Create")]
+    [HttpPost]
     public async Task<ActionResult<int>> Create(CreatePostCommand command)
     {
         return await Mediator.Send(command);
     }
 
-    [HttpPost("Delete")]
+    [HttpPost]
     public async Task<ActionResult<int>> Delete(DeletePostCommand command)
     {
         return await Mediator.Send(command);
     }
 
-    [HttpPost("Update")]
+    [HttpPost]
     public async Task<ActionResult<int>> Update(UpdatePostCommand command)
     {
         return await Mediator.Send(command);

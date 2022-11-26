@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Common\Mappings\" />
     <Folder Include="Features\Post\Queries\" />
     <Folder Include="Interfaces\Services\" />
     <Folder Include="Models\" />
