@@ -1,8 +1,6 @@
-﻿using Application.Features.Post.Commands.CreatePost;
-using Application.Interfaces.Contexts;
+﻿using Application.Interfaces.Contexts;
 using AutoMapper;
 using Domain.Events.Comment;
-using Domain.Events.Post;
 using MediatR;
 
 namespace Application.Features.Comment.CreateComment;
