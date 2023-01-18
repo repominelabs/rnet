@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces.Repositories;
 using Cinis.PostgreSql;
+using Infrastructure.Persistence.Common;
 using Npgsql;
-using RabbitMQ.Client;
 
 namespace Infrastructure.Persistence.Repositories;
 
@@ -10,13 +10,24 @@ namespace Infrastructure.Persistence.Repositories;
 /// </summary>
 public abstract class BaseRepository<T> : IBaseRepository<T>
 {
+    private readonly string _connStr;
+
+    public BaseRepository(string connStr)
+    {
+        _connStr = connStr;
+    }
+
+    public BaseRepository()
+    {
+    }
+
     public dynamic Create(T entity, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
         dynamic result;
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 connection.Open();
                 result = connection.Create(entity, transaction);
@@ -36,7 +47,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 await connection.OpenAsync();
                 result = await connection.CreateAsync(entity, transaction);
@@ -56,7 +67,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 connection.Open();
                 result = connection.Read<T>(id, whereClause, transaction);
@@ -76,7 +87,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 await connection.OpenAsync();
                 result = await connection.ReadAsync<T>(id, whereClause, transaction);
@@ -96,7 +107,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 connection.Open();
                 result = connection.Update(entity, nullable, whereClause, transaction);
@@ -116,7 +127,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 await connection.OpenAsync();
                 result = await connection.UpdateAsync(entity, nullable, whereClause, transaction);
@@ -136,7 +147,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 connection.Open();
                 result = connection.Delete<T>(id, whereClause, transaction);
@@ -156,7 +167,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         if (connection is null)
         {
-            using (connection = ConnectionFactory.CreateDbConnection())
+            using (connection = ConnectionFactory.CreateDbConnection(_connStr))
             {
                 await connection.OpenAsync();
                 result = await connection.DeleteAsync<T>(id, whereClause, transaction);

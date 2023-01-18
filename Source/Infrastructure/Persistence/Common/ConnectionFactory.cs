@@ -1,4 +1,5 @@
-﻿using Npgsql;
+﻿using Microsoft.Extensions.Configuration;
+using Npgsql;
 using System.Data.Common;
 
 namespace Infrastructure.Persistence.Common;
@@ -10,7 +11,7 @@ public class ConnectionFactory
     // Returns a DbConnection on success; null on failure.
     public static NpgsqlConnection CreateDbConnection(string connectionString = null)
     {
-        connectionString ??= ConfigurationHelper.Configuration.GetValue<string>("ConnectionStrings:DBConnection");
+        connectionString ??= ConfigManager.Configuration.GetValue<string>("ConnectionStrings:DefaultConnection");
 
         // Create the DbProviderFactory and DbConnection.
         if (connectionString != null)
