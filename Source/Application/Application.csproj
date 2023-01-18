@@ -6,13 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Interfaces\Services\**" />
     <Compile Remove="Models\**" />
+    <EmbeddedResource Remove="Interfaces\Services\**" />
     <EmbeddedResource Remove="Models\**" />
+    <None Remove="Interfaces\Services\**" />
     <None Remove="Models\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\Services\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
