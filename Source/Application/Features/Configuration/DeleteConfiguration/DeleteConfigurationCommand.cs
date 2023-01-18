@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace Application.Features.Comment.DeleteConfiguration;
+namespace Application.Features.Configuration.DeleteConfiguration;
 
 public class DeleteConfigurationCommand : IRequest<object>
 {

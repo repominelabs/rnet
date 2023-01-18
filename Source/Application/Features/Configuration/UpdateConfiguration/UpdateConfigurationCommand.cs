@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace Application.Features.Comment.UpdateConfiguration;
+namespace Application.Features.Configuration.UpdateConfiguration;
 
 public class UpdateConfigurationCommand : IRequest<object>
 {
