@@ -2,6 +2,7 @@
 
 public class ContentTypes
 {
-    const string APPLICATION_JSON = "application/json";
-    const string MULTIPART_FORM_DATA = "multipart/form-data";
+    public const string APPLICATION_JSON = "application/json";
+    public const string MULTIPART_FORM_DATA = "multipart/form-data";
+    public const string APPLICATION_SOAP_XML = "application/soap+xml";
 }
