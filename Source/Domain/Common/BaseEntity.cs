@@ -6,7 +6,7 @@ namespace Domain.Common;
 public abstract class BaseEntity
 {
     [Key]
-    [Column("ID")]
+    [Column("id")]
     public int Id { get; set; }
 
     private readonly List<BaseEvent> _domainEvents = new();

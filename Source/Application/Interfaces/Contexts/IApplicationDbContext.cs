@@ -5,7 +5,6 @@ namespace Application.Interfaces.Contexts;
 
 public interface IApplicationDbContext
 {
-    DbSet<Comment> Comments { get; }
-    DbSet<Post> Posts { get; }
+    DbSet<Configuration> Configurations { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

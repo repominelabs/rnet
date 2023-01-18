@@ -21,9 +21,8 @@ public static class ConfigureServices
 
         _ = services
             .AddTransient<IApplicationDbContext, ApplicationDbContext>()
-            .AddTransient<ICommentRepository, CommentRepository>(x => new(configuration["ConnectionStrings:DefaultConnection"]))
-            .AddTransient<IPostRepository, PostRepository>(x => new(configuration["ConnectionStrings:DefaultConnection"]))
-            .AddTransient<IUnitOfWork, UnitOfWork>();
+            .AddTransient<IConfigurationRepository, ConfigurationRepository>(x => new(ConfigurationRepository["ConnectionStrings:DefaultConnection"]));
+
         return services;
     }
 }
