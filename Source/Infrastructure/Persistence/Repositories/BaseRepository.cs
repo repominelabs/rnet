@@ -1,181 +1,172 @@
 ﻿using Application.Interfaces.Repositories;
 using Cinis.PostgreSql;
 using Npgsql;
+using RabbitMQ.Client;
 
 namespace Infrastructure.Persistence.Repositories;
 
 /// <summary>
 /// 
 /// </summary>
-public class BaseRepository<T> : IBaseRepository<T>
+public abstract class BaseRepository<T> : IBaseRepository<T>
 {
-    private readonly string _connStr;
-
-    public BaseRepository(string connStr)
+    public dynamic Create(T entity, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        _connStr = connStr;
-    }
+        dynamic result;
 
-    public object Create(T entity)
-    {
-        using var connection = new NpgsqlConnection(_connStr);
-        connection.Open();
-        try
+        if (connection is null)
         {
-            object response = connection.Create(entity);
-            return response;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-            throw;
-        }
-    }
-
-    public async Task<object> CreateAsync(T entity)
-    {
-        using var connection = new NpgsqlConnection(_connStr);
-        await connection.OpenAsync();
-        try
-        {
-            object response = await connection.CreateAsync(entity);
-            return response;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-            throw;
-        }
-    }
-
-    public object CreateOrUpdate(T entity, bool nullable = false, object? id = null, string? whereClause = null)
-    {
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-        T existingEntity = Read(id, whereClause).FirstOrDefault();
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
-        if (existingEntity != null)
-        {
-            object response = Update(entity, nullable, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                connection.Open();
+                result = connection.Create(entity, transaction);
+            }
         }
         else
         {
-            object response = Create(entity);
-            return response;
+            result = connection.Create(entity, transaction);
         }
+
+        return result;
     }
 
-    public async Task<object> CreateOrUpdateAsync(T entity, bool nullable = false, object? id = null, string? whereClause = null)
+    public async Task<dynamic> CreateAsync(T entity, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        var existingEntities = await ReadAsync(id, whereClause);
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-        T existingEntity = existingEntities.FirstOrDefault();
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
-        if (existingEntity != null)
+        dynamic result;
+
+        if (connection is null)
         {
-            object response = await UpdateAsync(entity, nullable, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                await connection.OpenAsync();
+                result = await connection.CreateAsync(entity, transaction);
+            }
         }
         else
         {
-            object response = await CreateAsync(entity);
-            return response;
+            result = await connection.CreateAsync(entity, transaction);
         }
+
+        return result;
     }
 
-    public object Delete(object id, string whereClause)
+    public List<T> Read(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        using var connection = new NpgsqlConnection(_connStr);
-        connection.Open();
-        try
+        List<T> result;
+
+        if (connection is null)
         {
-            object response = connection.Delete<T>(id, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                connection.Open();
+                result = connection.Read<T>(id, whereClause, transaction);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.ToString());
-            throw;
+            result = connection.Read<T>(id, whereClause, transaction);
         }
+
+        return result;
     }
 
-    public async Task<object> DeleteAsync(object? id = null, string? whereClause = null)
+    public async Task<List<T>> ReadAsync(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        using var connection = new NpgsqlConnection(_connStr);
-        await connection.OpenAsync();
-        try
+        List<T> result;
+
+        if (connection is null)
         {
-            object response = await connection.DeleteAsync<T>(id, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                await connection.OpenAsync();
+                result = await connection.ReadAsync<T>(id, whereClause, transaction);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.ToString());
-            throw;
+            result = await connection.ReadAsync<T>(id, whereClause, transaction);
         }
+
+        return result;
     }
 
-    public List<T> Read(object? id = null, string? whereClause = null)
+    public dynamic Update(T entity, bool nullable = false, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        using var connection = new NpgsqlConnection(_connStr);
-        connection.Open();
-        try
+        dynamic result;
+
+        if (connection is null)
         {
-            List<T> response = connection.Read<T>(id, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                connection.Open();
+                result = connection.Update(entity, nullable, whereClause, transaction);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.ToString());
-            throw;
+            result = connection.Update(entity, nullable, whereClause, transaction);
         }
+
+        return result;
     }
 
-    public async Task<List<T>> ReadAsync(object? id = null, string? whereClause = null)
+    public async Task<dynamic> UpdateAsync(T entity, bool nullable = false, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        using var connection = new NpgsqlConnection(_connStr);
-        await connection.OpenAsync();
-        try
+        dynamic result;
+
+        if (connection is null)
         {
-            List<T> response = await connection.ReadAsync<T>(id, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                await connection.OpenAsync();
+                result = await connection.UpdateAsync(entity, nullable, whereClause, transaction);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.ToString());
-            throw;
+            result = await connection.UpdateAsync(entity, nullable, whereClause, transaction);
         }
+
+        return result;
     }
 
-    public object Update(T entity, bool nullable = false, string? whereClause = null)
+    public dynamic Delete(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        using var connection = new NpgsqlConnection(_connStr);
-        connection.Open();
-        try
+        dynamic result;
+
+        if (connection is null)
         {
-            object response = connection.Update(entity, nullable, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                connection.Open();
+                result = connection.Delete<T>(id, whereClause, transaction);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.ToString());
-            throw;
+            result = connection.Delete<T>(id, whereClause, transaction);
         }
+
+        return result;
     }
 
-    public async Task<object> UpdateAsync(T entity, bool nullable = false, string? whereClause = null)
+    public async Task<dynamic> DeleteAsync(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null)
     {
-        using var connection = new NpgsqlConnection(_connStr);
-        await connection.OpenAsync();
-        try
+        dynamic result;
+
+        if (connection is null)
         {
-            object response = await connection.UpdateAsync(entity, nullable, whereClause);
-            return response;
+            using (connection = ConnectionFactory.CreateDbConnection())
+            {
+                await connection.OpenAsync();
+                result = await connection.DeleteAsync<T>(id, whereClause, transaction);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.ToString());
-            throw;
+            result = await connection.DeleteAsync<T>(id, whereClause, transaction);
         }
+
+        return result;
     }
 }

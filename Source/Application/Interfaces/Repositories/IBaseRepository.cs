@@ -1,15 +1,16 @@
-﻿namespace Application.Interfaces.Repositories;
+﻿using Npgsql;
+using System.Data;
+
+namespace Application.Interfaces.Repositories;
 
 public interface IBaseRepository<T>
 {
-    object Create(T entity);
-    Task<object> CreateAsync(T entity);
-    object CreateOrUpdate(T entity, bool nullable = false, object id = null, string whereClause = null);
-    Task<object> CreateOrUpdateAsync(T entity, bool nullable = false, object id = null, string whereClause = null);
-    object Delete(object id = null, string whereClause = null);
-    Task<object> DeleteAsync(object id = null, string whereClause = null);
-    List<T> Read(object id = null, string whereClause = null);
-    Task<List<T>> ReadAsync(object id = null, string whereClause = null);
-    object Update(T entity, bool nullable = false, string whereClause = null);
-    Task<object> UpdateAsync(T entity, bool nullable = false, string whereClause = null);
+    dynamic Create(T entity, IDbConnection connection = null, IDbTransaction transaction = null);
+    Task<dynamic> CreateAsync(T entity, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null);
+    List<T> Read(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null);
+    Task<List<T>> ReadAsync(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null);
+    dynamic Update(T entity, bool nullable = false, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null);
+    Task<dynamic> UpdateAsync(T entity, bool nullable = false, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null);
+    dynamic Delete(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null);
+    Task<dynamic> DeleteAsync(object id = null, string whereClause = null, NpgsqlConnection connection = null, NpgsqlTransaction transaction = null);
 }
