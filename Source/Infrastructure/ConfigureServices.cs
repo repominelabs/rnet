@@ -2,6 +2,7 @@
 using Application.Interfaces.Repositories;
 using Infrastructure.Persistence.Contexts;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,9 @@ public static class ConfigureServices
         services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(configuration["ConnectionStrings:DefaultConnection"]));
 
         _ = services
+            .AddTransient<HttpClientService>()
+            .AddTransient<KafkaClientService>()
+            .AddTransient<RabbitMQClientService>()
             .AddTransient<IApplicationDbContext, ApplicationDbContext>()
             .AddTransient<ICommentRepository, CommentRepository>(x => new(configuration["ConnectionStrings:DefaultConnection"]))
             .AddTransient<IPostRepository, PostRepository>(x => new(configuration["ConnectionStrings:DefaultConnection"]))
