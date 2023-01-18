@@ -16,7 +16,7 @@ public class CommentController : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<int>> Delete(DeleteCommentCommand command)
+    public async Task<ActionResult<int>> Delete(DeleteConfigurationCommand command)
     {
         return await Mediator.Send(command);
     }
