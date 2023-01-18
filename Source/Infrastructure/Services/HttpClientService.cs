@@ -15,19 +15,11 @@ namespace Infrastructure.Services;
 /// </summary>
 public class HttpClientService
 {
-    private readonly HttpClient _httpClient;
-
     /// <summary>
     /// Constructor - Http Client Service
     /// </summary>
     public HttpClientService()
     {
-        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-        HttpClientHandler handler = new()
-        {
-            ServerCertificateCustomValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
-        };
-        _httpClient = new HttpClient(handler);
     }
 
     /// <summary>
@@ -46,98 +38,102 @@ public class HttpClientService
     /// <param name="timeout"></param>
     /// <param name="followRedirects"></param>
     /// <returns></returns>
-    public T SendSOAPRequest<T>(string url, string action, object request, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_SOAP_XML, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
+    public static T SendSOAPRequest<T>(string url, string action, object request, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_SOAP_XML, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
     {
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        HttpClientHandler handler = new()
+        {
+            ServerCertificateCustomValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
+        };
+        using HttpClient httpClient = new(handler);
         try
         {
             // Create a retry policy with a specific number of retries and a specific delay between retries
             var retryPolicy = Policy.Handle<WebException>().WaitAndRetryAsync(maxRetries, retryAttempt => TimeSpan.FromMilliseconds(retryDelay));
 
             // Set timeout and redirect options
-            _httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
-            _httpClient.DefaultRequestHeaders.ExpectContinue = false;
-            _httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
+            httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
+            httpClient.DefaultRequestHeaders.ExpectContinue = false;
+            httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
 
             EndpointAddress endpoint = new(url);
-            using (ChannelFactory<T> client = new(new BasicHttpBinding(), endpoint))
+            using ChannelFactory<T> client = new(new BasicHttpBinding(), endpoint);
+            var channel = client.CreateChannel();
+            using (new OperationContextScope((IContextChannel)channel))
             {
-                var channel = client.CreateChannel();
-                using (new OperationContextScope((IContextChannel)channel))
+                var requestMessage = new HttpRequestMessage
                 {
-                    var requestMessage = new HttpRequestMessage
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(url)
+                };
+                var soapMessage = new HttpRequestMessage(HttpMethod.Post, url);
+                var serializer = new DataContractSerializer(request.GetType());
+                switch (contentType)
+                {
+                    case ContentTypes.APPLICATION_JSON:
+                        soapMessage.Content = new ObjectContent(request.GetType(), request, new JsonMediaTypeFormatter());
+                        break;
+                    case ContentTypes.MULTIPART_FORM_DATA:
+                        // Create a multipart form data content
+                        var multipartContent = new MultipartFormDataContent();
+                        // Add the request object to the content
+                        var jsonContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8);
+                        multipartContent.Add(jsonContent, "request");
+                        soapMessage.Content = multipartContent;
+                        break;
+                    default:
+                        soapMessage.Content = new ObjectContent(request.GetType(), request, new XmlMediaTypeFormatter(), contentType);
+                        break;
+                }
+                requestMessage.Headers.Add("SOAPAction", action);
+                if (headers != null)
+                {
+                    foreach (var header in headers)
                     {
-                        Method = HttpMethod.Post,
-                        RequestUri = new Uri(url)
-                    };
-                    var soapMessage = new HttpRequestMessage(HttpMethod.Post, url);
-                    var serializer = new DataContractSerializer(request.GetType());
-                    switch (contentType)
+                        requestMessage.Headers.Add(header.Key, header.Value);
+                    }
+                }
+                if (!string.IsNullOrEmpty(authValue))
+                {
+                    switch (authType)
                     {
-                        case ContentTypes.APPLICATION_JSON:
-                            soapMessage.Content = new ObjectContent(request.GetType(), request, new JsonMediaTypeFormatter());
+                        case AuthType.Basic:
+                            requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authValue);
                             break;
-                        case ContentTypes.MULTIPART_FORM_DATA:
-                            // Create a multipart form data content
-                            var multipartContent = new MultipartFormDataContent();
-                            // Add the request object to the content
-                            var jsonContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8);
-                            multipartContent.Add(jsonContent, "request");
-                            soapMessage.Content = multipartContent;
-                            break;
-                        default:
-                            soapMessage.Content = new ObjectContent(request.GetType(), request, new XmlMediaTypeFormatter(), contentType);
+                        case AuthType.JWT:
+                            requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authValue);
                             break;
                     }
-                    requestMessage.Headers.Add("SOAPAction", action);
-                    if (headers != null)
-                    {
-                        foreach (var header in headers)
-                        {
-                            requestMessage.Headers.Add(header.Key, header.Value);
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(authValue))
-                    {
-                        switch (authType)
-                        {
-                            case AuthType.Basic:
-                                requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authValue);
-                                break;
-                            case AuthType.JWT:
-                                requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authValue);
-                                break;
-                        }
-                    }
+                }
 
-                    // Execute the request with the retry policy
-                    var response = retryPolicy.ExecuteAsync(() => _httpClient.SendAsync(requestMessage)).Result;
+                // Execute the request with the retry policy
+                var response = retryPolicy.ExecuteAsync(() => httpClient.SendAsync(requestMessage)).Result;
 
-                    // Check for rate limiting
-                    var rateLimit = response.Headers.GetValues("X-Rate-Limit-Limit").FirstOrDefault();
-                    var rateRemaining = response.Headers.GetValues("X-Rate-Limit-Remaining").FirstOrDefault();
-                    if (rateLimit != null && rateRemaining != null)
-                    {
-                        // Handle rate limiting
-                    }
+                // Check for rate limiting
+                var rateLimit = response.Headers.GetValues("X-Rate-Limit-Limit").FirstOrDefault();
+                var rateRemaining = response.Headers.GetValues("X-Rate-Limit-Remaining").FirstOrDefault();
+                if (rateLimit != null && rateRemaining != null)
+                {
+                    // Handle rate limiting
+                }
 
-                    // Check for pagination
-                    var pagination = response.Headers.GetValues("Link").FirstOrDefault();
-                    if (!string.IsNullOrEmpty(pagination))
-                    {
-                        // Handle pagination
-                    }
+                // Check for pagination
+                var pagination = response.Headers.GetValues("Link").FirstOrDefault();
+                if (!string.IsNullOrEmpty(pagination))
+                {
+                    // Handle pagination
+                }
 
-                    // Check for response status code
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return response.Content.ReadAsAsync<T>().Result;
-                    }
-                    else
-                    {
-                        // Throw an exception or return a specific error message
-                        var error = response.Content.ReadAsStringAsync().Result;
-                        throw new Exception(error);
-                    }
+                // Check for response status code
+                if (response.IsSuccessStatusCode)
+                {
+                    return response.Content.ReadAsAsync<T>().Result;
+                }
+                else
+                {
+                    // Throw an exception or return a specific error message
+                    var error = response.Content.ReadAsStringAsync().Result;
+                    throw new Exception(error);
                 }
             }
         }
@@ -174,98 +170,102 @@ public class HttpClientService
     /// <param name="timeout"></param>
     /// <param name="followRedirects"></param>
     /// <returns></returns>
-    public async Task<T> SendSOAPRequestAsync<T>(string url, string action, object request, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_SOAP_XML, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
+    public static async Task<T> SendSOAPRequestAsync<T>(string url, string action, object request, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_SOAP_XML, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
     {
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        HttpClientHandler handler = new()
+        {
+            ServerCertificateCustomValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
+        };
+        using HttpClient httpClient = new(handler);
         try
         {
             // Create a retry policy with a specific number of retries and a specific delay between retries
             var retryPolicy = Policy.Handle<WebException>().WaitAndRetryAsync(maxRetries, retryAttempt => TimeSpan.FromMilliseconds(retryDelay));
 
             // Set timeout and redirect options
-            _httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
-            _httpClient.DefaultRequestHeaders.ExpectContinue = false;
-            _httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
+            httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
+            httpClient.DefaultRequestHeaders.ExpectContinue = false;
+            httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
 
             EndpointAddress endpoint = new(url);
-            using (ChannelFactory<T> client = new(new BasicHttpBinding(), endpoint))
+            using ChannelFactory<T> client = new(new BasicHttpBinding(), endpoint);
+            var channel = client.CreateChannel();
+            using (new OperationContextScope((IContextChannel)channel))
             {
-                var channel = client.CreateChannel();
-                using (new OperationContextScope((IContextChannel)channel))
+                var requestMessage = new HttpRequestMessage
                 {
-                    var requestMessage = new HttpRequestMessage
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(url)
+                };
+                var soapMessage = new HttpRequestMessage(HttpMethod.Post, url);
+                var serializer = new DataContractSerializer(request.GetType());
+                switch (contentType)
+                {
+                    case ContentTypes.APPLICATION_JSON:
+                        soapMessage.Content = new ObjectContent(request.GetType(), request, new JsonMediaTypeFormatter());
+                        break;
+                    case ContentTypes.MULTIPART_FORM_DATA:
+                        // Create a multipart form data content
+                        var multipartContent = new MultipartFormDataContent();
+                        // Add the request object to the content
+                        var jsonContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8);
+                        multipartContent.Add(jsonContent, "request");
+                        soapMessage.Content = multipartContent;
+                        break;
+                    default:
+                        soapMessage.Content = new ObjectContent(request.GetType(), request, new XmlMediaTypeFormatter(), contentType);
+                        break;
+                }
+                requestMessage.Headers.Add("SOAPAction", action);
+                if (headers != null)
+                {
+                    foreach (var header in headers)
                     {
-                        Method = HttpMethod.Post,
-                        RequestUri = new Uri(url)
-                    };
-                    var soapMessage = new HttpRequestMessage(HttpMethod.Post, url);
-                    var serializer = new DataContractSerializer(request.GetType());
-                    switch (contentType)
+                        requestMessage.Headers.Add(header.Key, header.Value);
+                    }
+                }
+                if (!string.IsNullOrEmpty(authValue))
+                {
+                    switch (authType)
                     {
-                        case ContentTypes.APPLICATION_JSON:
-                            soapMessage.Content = new ObjectContent(request.GetType(), request, new JsonMediaTypeFormatter());
+                        case AuthType.Basic:
+                            requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authValue);
                             break;
-                        case ContentTypes.MULTIPART_FORM_DATA:
-                            // Create a multipart form data content
-                            var multipartContent = new MultipartFormDataContent();
-                            // Add the request object to the content
-                            var jsonContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8);
-                            multipartContent.Add(jsonContent, "request");
-                            soapMessage.Content = multipartContent;
-                            break;
-                        default:
-                            soapMessage.Content = new ObjectContent(request.GetType(), request, new XmlMediaTypeFormatter(), contentType);
+                        case AuthType.JWT:
+                            requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authValue);
                             break;
                     }
-                    requestMessage.Headers.Add("SOAPAction", action);
-                    if (headers != null)
-                    {
-                        foreach (var header in headers)
-                        {
-                            requestMessage.Headers.Add(header.Key, header.Value);
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(authValue))
-                    {
-                        switch (authType)
-                        {
-                            case AuthType.Basic:
-                                requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authValue);
-                                break;
-                            case AuthType.JWT:
-                                requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authValue);
-                                break;
-                        }
-                    }
+                }
 
-                    // Execute the request with the retry policy
-                    var response = await retryPolicy.ExecuteAsync(() => _httpClient.SendAsync(requestMessage));
+                // Execute the request with the retry policy
+                var response = await retryPolicy.ExecuteAsync(() => httpClient.SendAsync(requestMessage));
 
-                    // Check for rate limiting
-                    var rateLimit = response.Headers.GetValues("X-Rate-Limit-Limit").FirstOrDefault();
-                    var rateRemaining = response.Headers.GetValues("X-Rate-Limit-Remaining").FirstOrDefault();
-                    if (rateLimit != null && rateRemaining != null)
-                    {
-                        // Handle rate limiting
-                    }
+                // Check for rate limiting
+                var rateLimit = response.Headers.GetValues("X-Rate-Limit-Limit").FirstOrDefault();
+                var rateRemaining = response.Headers.GetValues("X-Rate-Limit-Remaining").FirstOrDefault();
+                if (rateLimit != null && rateRemaining != null)
+                {
+                    // Handle rate limiting
+                }
 
-                    // check for pagination
-                    var pagination = response.Headers.GetValues("Link").FirstOrDefault();
-                    if (!string.IsNullOrEmpty(pagination))
-                    {
-                        // Handle pagination
-                    }
+                // check for pagination
+                var pagination = response.Headers.GetValues("Link").FirstOrDefault();
+                if (!string.IsNullOrEmpty(pagination))
+                {
+                    // Handle pagination
+                }
 
-                    // Check for response status code
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return await response.Content.ReadAsAsync<T>();
-                    }
-                    else
-                    {
-                        // Throw an exception or return a specific error message
-                        var error = await response.Content.ReadAsStringAsync();
-                        throw new Exception(error);
-                    }
+                // Check for response status code
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsAsync<T>();
+                }
+                else
+                {
+                    // Throw an exception or return a specific error message
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new Exception(error);
                 }
             }
         }
@@ -302,17 +302,23 @@ public class HttpClientService
     /// <param name="timeout"></param>
     /// <param name="followRedirects"></param>
     /// <returns></returns>
-    protected T SendRESTRequest<T>(string url, HttpMethod method, object request = null, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_JSON, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
+    protected static T SendRESTRequest<T>(string url, HttpMethod method, object request = null, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_JSON, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
     {
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        HttpClientHandler handler = new()
+        {
+            ServerCertificateCustomValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
+        };
+        using HttpClient httpClient = new(handler);
         try
         {
             // Create a retry policy with a specific number of retries and a specific delay between retries
             var retryPolicy = Policy.Handle<WebException>().WaitAndRetryAsync(maxRetries, retryAttempt => TimeSpan.FromMilliseconds(retryDelay));
 
             // Set timeout and redirect options
-            _httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
-            _httpClient.DefaultRequestHeaders.ExpectContinue = false;
-            _httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
+            httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
+            httpClient.DefaultRequestHeaders.ExpectContinue = false;
+            httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
 
             var requestMessage = new HttpRequestMessage
             {
@@ -357,7 +363,7 @@ public class HttpClientService
             }
 
             // Execute the request with the retry policy
-            var response = retryPolicy.ExecuteAsync(() => _httpClient.SendAsync(requestMessage)).Result;
+            var response = retryPolicy.ExecuteAsync(() => httpClient.SendAsync(requestMessage)).Result;
 
             // Check for rate limiting
             var rateLimit = response.Headers.GetValues("X-Rate-Limit-Limit").FirstOrDefault();
@@ -414,17 +420,23 @@ public class HttpClientService
     /// <param name="timeout"></param>
     /// <param name="followRedirects"></param>
     /// <returns></returns>
-    protected async Task<T> SendRESTRequestAsync<T>(string url, HttpMethod method, object request = null, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_JSON, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
+    protected static async Task<T> SendRESTRequestAsync<T>(string url, HttpMethod method, object request = null, Dictionary<string, string> headers = null, AuthType authType = AuthType.Basic, string authValue = null, string contentType = ContentTypes.APPLICATION_JSON, int maxRetries = 3, int retryDelay = 1000, int timeout = 10000, bool followRedirects = true)
     {
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        HttpClientHandler handler = new()
+        {
+            ServerCertificateCustomValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
+        };
+        using HttpClient httpClient = new(handler);
         try
         {
             // Create a retry policy with a specific number of retries and a specific delay between retries
             var retryPolicy = Policy.Handle<WebException>().WaitAndRetryAsync(maxRetries, retryAttempt => TimeSpan.FromMilliseconds(retryDelay));
 
             // Set timeout and redirect options
-            _httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
-            _httpClient.DefaultRequestHeaders.ExpectContinue = false;
-            _httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
+            httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
+            httpClient.DefaultRequestHeaders.ExpectContinue = false;
+            httpClient.DefaultRequestHeaders.ConnectionClose = !followRedirects;
 
             var requestMessage = new HttpRequestMessage
             {
@@ -469,7 +481,7 @@ public class HttpClientService
             }
 
             // Execute the request with the retry policy
-            var response = await retryPolicy.ExecuteAsync(() => _httpClient.SendAsync(requestMessage));
+            var response = await retryPolicy.ExecuteAsync(() => httpClient.SendAsync(requestMessage));
 
             // Check for rate limiting
             var rateLimit = response.Headers.GetValues("X-Rate-Limit-Limit").FirstOrDefault();

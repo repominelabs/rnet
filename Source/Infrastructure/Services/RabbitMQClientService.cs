@@ -8,18 +8,12 @@ namespace Infrastructure.Services;
 /// </summary>
 public class RabbitMQClientService
 {
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
-
     /// <summary>
     /// Constructor - RabbitMQ Client Service
     /// </summary>
     /// <param name="connection"></param>
-    public RabbitMQClientService(IConnection connection)
+    public RabbitMQClientService()
     {
-        _connection = connection;
-        _channel = connection.CreateModel();
-        _channel.ConfirmSelect();
     }
 
     /// <summary>
@@ -27,22 +21,27 @@ public class RabbitMQClientService
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="message"></param>
+    /// <param name="host"></param>
     /// <param name="exchange"></param>
     /// <param name="routingKey"></param>
-    public void Produce<T>(T message, string exchange, string routingKey)
+    public static void Produce<T>(T message, string host, string exchange, string routingKey)
     {
+        var factory = new ConnectionFactory() { HostName = host  };
+        using var connection = factory.CreateConnection();
+        using var channel = connection.CreateModel();
         try
         {
+            channel.ConfirmSelect();
             byte[] messageBodyBytes = Encoding.UTF8.GetBytes(message.ToString());
 
-            var basicProperties = _channel.CreateBasicProperties();
+            var basicProperties = channel.CreateBasicProperties();
             basicProperties.Persistent = true;
 
-            _channel.BasicPublish(exchange,
+            channel.BasicPublish(exchange,
                                  routingKey,
                                  basicProperties,
                                  body: messageBodyBytes);
-            _channel.WaitForConfirms();
+            channel.WaitForConfirms();
         }
         catch (Exception ex)
         {
@@ -57,23 +56,27 @@ public class RabbitMQClientService
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="message"></param>
+    /// <param name="host"></param>
     /// <param name="exchange"></param>
     /// <param name="routingKey"></param>
     /// <returns></returns>
-    public async Task ProduceAsync<T>(T message, string exchange, string routingKey)
+    public static async Task ProduceAsync<T>(T message, string host, string exchange, string routingKey)
     {
+        var factory = new ConnectionFactory() { HostName = host };
+        using var connection = factory.CreateConnection();
+        using var channel = connection.CreateModel();
         try
         {
             byte[] messageBodyBytes = Encoding.UTF8.GetBytes(message.ToString());
 
-            var basicProperties = _channel.CreateBasicProperties();
+            var basicProperties = channel.CreateBasicProperties();
             basicProperties.Persistent = true;
 
-            await Task.Run(() => _channel.BasicPublish(exchange,
+            await Task.Run(() => channel.BasicPublish(exchange,
                                  routingKey,
                                  basicProperties,
                                  body: messageBodyBytes));
-            await Task.Run(() => _channel.WaitForConfirmsOrDie());
+            await Task.Run(() => channel.WaitForConfirmsOrDie());
         }
         catch (Exception ex)
         {
