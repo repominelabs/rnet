@@ -27,12 +27,12 @@ public class CreateConfigurationCommandHandler : IRequestHandler<CreateConfigura
         _mapper = mapper;
     }
 
-    public Task<object> Handle(CreateConfigurationCommand request, CancellationToken cancellationToken)
+    public async Task<object> Handle(CreateConfigurationCommand request, CancellationToken cancellationToken)
     {
         try
         {
             Domain.Entities.Configuration configuration = _mapper.Map<CreateConfigurationCommand, Domain.Entities.Configuration>(request);
-            var response = _configurationRepository.Create(configuration);
+            var response = await _configurationRepository.CreateAsync(configuration);
             return response;
         }
         catch (Exception)
